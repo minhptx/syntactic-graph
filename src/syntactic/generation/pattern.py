@@ -156,6 +156,9 @@ class Graph:
 
         return graph
 
+    def to_pattern_paths(self):
+        for 
+
     @staticmethod
     def get_nth_edge_values(atomic, input_str, i, j):
         left_nth = len(re.findall(atomic.regex, input_str[:i])) + 1

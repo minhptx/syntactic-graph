@@ -1,10 +1,27 @@
 import random
+import time
 from collections import defaultdict
 
 import pandas as pd
-import time
-
 from syntactic.generation.pattern import Graph
+
+
+class Cluster:
+    def __init__(self, text_list=None, pattern_graph=None):
+        if text_list:
+            self.text_list = text_list
+        else:
+            self.text_list = []
+
+        self.pattern_graph = pattern_graph
+
+    @staticmethod
+    def generate(seed, cluster_value_list):
+        cluster_graph = Graph.generate(seed)
+        for cluster_text in cluster_value_list:
+            cluster_graph = cluster_graph.intersect(Graph.generate(cluster_text))
+
+        return Cluster(cluster_value_list + [seed], cluster_graph)
 
 
 class HierarchicalModel:
@@ -16,35 +33,17 @@ class HierarchicalModel:
         self.clusters = []
         self.graph_map = defaultdict(lambda: defaultdict(lambda: None))
         self.distance_map = defaultdict(lambda: defaultdict(lambda: -1))
+        self.nearest_seeds_map = defaultdict(lambda: None)
         self.min_distance_map = defaultdict(lambda: 0)
 
     def build_hierarchy(self):
-        seed_set, anchor = self.seed_cluster()
+        pre_cluster_map = defaultdict(lambda: [])
 
-        min_seed = None
-        min_dist = HierarchicalModel.MAX_DISTANCE
-        for seed in seed_set:
-            if self.distance_map[seed][anchor] < min_dist:
-                min_dist = self.distance_map[seed][anchor]
-                min_seed = seed
+        for text, seed in self.nearest_seeds_map.items():
+            pre_cluster_map[seed].append(text)
 
-        uncovered_list = self.text_list[:]
-
-        while uncovered_list:
-            graph = self.graph_map[min_seed][anchor]
-
-            cluster = [min_seed, anchor]
-            uncovered_list.remove(min_seed)
-            uncovered_list.remove(anchor)
-
-            for text in uncovered_list:
-                if text in seed_set:
-                    continue
-                elif graph.is_matched(text):
-                    cluster.append(text)
-                    uncovered_list.remove(text)
-                else:
-                    pass
+        for seed, cluster_value_list in pre_cluster_map.items():
+            self.clusters.append(Cluster.generate(seed, cluster_value_list))
 
     def seed_cluster(self):
 
@@ -103,6 +102,7 @@ class HierarchicalModel:
 
                 if self.distance_map[anchor][text] < min_dist:
                     min_dist = self.distance_map[anchor][text]
+                    self.nearest_seeds_map[text] = anchor
 
             self.min_distance_map[text] = min_dist
             if min_dist > max_dist:
