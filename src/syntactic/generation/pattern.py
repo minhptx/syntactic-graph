@@ -156,8 +156,6 @@ class Graph:
 
         return graph
 
-    def to_pattern_paths(self):
-        for 
 
     @staticmethod
     def get_nth_edge_values(atomic, input_str, i, j):
