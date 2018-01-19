@@ -5,15 +5,22 @@ from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, Con
 
 
 class EdgeValue:
-    def __init__(self, atomic, nth, length=-1):
+    def __init__(self, atomic, nth, length=-1, values=None):
         self.atomic = atomic
         self.nth = nth
         self.length = length
+        if values:
+            self.values = values
+        else:
+            self.values = []
 
     def __eq__(self, ev):
         if self.atomic.name == ev.atomic.name and self.nth == ev.nth and self.length == self.length:
             return True
         return False
+
+    def join(self, ev):
+        return EdgeValue(self.atomic, self.nth, self.length, self.values + ev.values)
 
 
 class Edge:
@@ -32,7 +39,8 @@ class Edge:
             for ev_2 in edge.value_list:
                 if ev_1 == ev_2:
                     # print(ev_1.atomic.name)
-                    matched_list.append(ev_1)
+                    ev = ev_1.join(ev_2)
+                    matched_list.append(ev)
         if matched_list:
             return Edge(matched_list)
         return None
@@ -52,6 +60,7 @@ class Graph:
         return count
 
     def intersect(self, other_graph):
+        print(self, other_graph)
         graph = Graph(self.text_list + other_graph.text_list)
 
         start_nodes = (tuple([0] * len(self.text_list)), tuple([0] * len(other_graph.text_list)))

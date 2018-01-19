@@ -2,6 +2,7 @@ class TransformationModel:
     def __init__(self):
         self.model = None
 
-    def 
+    def generate_program(self):
+        pass
 
 

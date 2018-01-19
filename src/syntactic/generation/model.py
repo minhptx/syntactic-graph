@@ -75,13 +75,13 @@ class HierarchicalModel:
 
         graph = graph_1.intersect(graph_2)
 
-        self.graph_map[text_1][text_2] = graph
-        self.graph_map[text_2][text_1] = graph
+        self.graph_map[text_1] = graph_1
+        self.graph_map[text_2] = graph_2
 
         if not graph:
             return HierarchicalModel.MAX_DISTANCE
 
-        return 2 - graph.num_edge() * 1.0 / min(graph_1.num_edge(), graph_2.num_edge())
+        return 1 - graph.num_edge() * 1.0 / min(graph_1.num_edge(), graph_2.num_edge())
 
     def max_dist_sample(self, text_list, anchor_set):
         max_dist = 0
