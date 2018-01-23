@@ -73,6 +73,9 @@ class HierarchicalModel:
         else:
             graph_2 = Graph.generate(text_2)
 
+        print(graph_1.num_edge())
+        print(graph_2.num_edge())
+
         graph = graph_1.intersect(graph_2)
 
         self.graph_map[text_1] = graph_1

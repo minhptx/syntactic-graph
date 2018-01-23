@@ -145,8 +145,9 @@ class Graph:
         graph.edge_map[(n - 1,)][(n,)] = Edge([EdgeValue(END_TOKEN, 1)])
 
         for i in range(1, n - 1):
-            for j in range(i + 1, n):
 
+            for j in range(i + 1, n):
+                
                 sub_str = input_str[i:j]
 
                 graph.edge_map[(i,)][(j,)] = Edge(
@@ -164,7 +165,6 @@ class Graph:
                             EdgeValue(atomic, -right_index, j - i))  # fixed-length
 
         return graph
-
 
     @staticmethod
     def get_nth_edge_values(atomic, input_str, i, j):

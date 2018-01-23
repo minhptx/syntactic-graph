@@ -53,8 +53,6 @@ class DistanceEvaluation:
 
         for point_1, point_2, result in data_set:
             print(point_1, point_2)
-            if len(point_1) > 20 or len(point_2) > 20:
-                continue
             distance = model.dissimilarity(point_1, point_2)
             if distance == HierarchicalModel.MAX_DISTANCE:
                 distance = 1
