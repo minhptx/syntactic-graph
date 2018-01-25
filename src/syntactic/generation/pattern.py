@@ -2,6 +2,7 @@ import regex as re
 from collections import defaultdict
 
 from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString
+from utils import cache
 
 
 class EdgeValue:
@@ -15,12 +16,24 @@ class EdgeValue:
             self.values = []
 
     def __eq__(self, ev):
-        if self.atomic.name == ev.atomic.name and self.nth == ev.nth and self.length == self.length:
+        if self.atomic == ev.atomic and self.nth == ev.nth and self.length == self.length:
             return True
         return False
 
+    def is_subset(self, ev):
+        if self.atomic.is_subset(ev.atomic):
+            if self.nth == ev.nth:
+                return True
+        elif self.atomic == ev.atomic:
+            if self.length <= ev.length or (ev.length == -1 and self.length != -1):
+                if self.nth == ev.nth:
+                    return True
+
+        return False
+
     def join(self, ev):
-        return EdgeValue(self.atomic, self.nth, self.length, self.values + ev.values)
+        if self == ev:
+            return EdgeValue(self.atomic, self.nth, self.length, self.values + ev.values)
 
 
 class Edge:
@@ -37,7 +50,7 @@ class Edge:
         matched_list = []
         for ev_1 in self.value_list:
             for ev_2 in edge.value_list:
-                if ev_1 == ev_2:
+                if ev_1 == ev_2 and ev_1 not in matched_list:
                     # print(ev_1.atomic.name)
                     ev = ev_1.join(ev_2)
                     matched_list.append(ev)
@@ -59,18 +72,66 @@ class Graph:
 
         return count
 
+    def simplify(self):
+        graph = Graph(self.text_list[:])
+        for start_node in self.edge_map:
+            for end_node in self.edge_map[start_node]:
+                edge = self.edge_map[start_node][end_node]
+                minimal_list = edge.value_list[:]
+                for ev_1 in edge.value_list:
+                    for ev_2 in edge.value_list:
+                        if ev_1.is_subset(ev_2):
+                            minimal_list.remove(ev_2)
+
+                graph.edge_map[start_node][end_node] = Edge(minimal_list)
+        return graph
+
+    def to_paths(self):
+        paths = []
+        start_node = tuple([0] * len(self.text_list))
+
+        visited = []
+
+        self.traverse(start_node, [], paths, visited)
+
+        edge_paths = []
+
+        for path in paths:
+            edge_path = []
+            for idx in range(1, len(path)):
+                edge_path.append(self.edge_map[path[idx - 1]][path[idx]])
+
+            edge_paths.append(edge_path)
+
+        return edge_paths
+
+    def traverse(self, current_node, path, paths, visited):
+        path.append(current_node)
+        visited.append(current_node)
+
+        for end_node in self.edge_map[current_node]:
+            if self.edge_map[current_node][end_node]:
+                paths.append(path + [end_node])
+            else:
+                self.traverse(end_node, path, paths, visited)
+
+        visited.remove(current_node)
+        path.remove(current_node)
+
     def intersect(self, other_graph):
-        print(self, other_graph)
+        # print(self, other_graph)
         graph = Graph(self.text_list + other_graph.text_list)
 
         start_nodes = (tuple([0] * len(self.text_list)), tuple([0] * len(other_graph.text_list)))
 
         queue = [start_nodes]
+        visited = []
 
         is_connected = False
 
         while queue:
             node_1, node_2 = queue.pop()
+            visited.append((node_1, node_2))
 
             for name_1_2 in self.edge_map[node_1]:
                 edge_1 = self.edge_map[node_1][name_1_2]
@@ -86,7 +147,8 @@ class Graph:
                     edge = edge_1.join(edge_2)
                     if edge:
                         graph.edge_map[node_1 + node_2][name_1_2 + name_2_2] = edge
-                        queue.append((name_1_2, name_2_2))
+                        if ((name_1_2, name_2_2)) not in visited:
+                            queue.append((name_1_2, name_2_2))
 
                         if edge.value_list[0].atomic == END_TOKEN:
                             is_connected = True
@@ -147,11 +209,14 @@ class Graph:
         for i in range(1, n - 1):
 
             for j in range(i + 1, n):
-                
+
                 sub_str = input_str[i:j]
 
-                graph.edge_map[(i,)][(j,)] = Edge(
-                    list(Graph.get_nth_edge_values(ConstantString(sub_str), input_str, i, j)))
+                if j <= i + 5:
+                    graph.edge_map[(i,)][(j,)] = Edge(
+                        list(Graph.get_nth_edge_values(ConstantString(sub_str), input_str, i, j)))
+                else:
+                    graph.edge_map[(i,)][(j,)] = Edge([])
 
                 for atomic in ATOMIC_LIST:
                     if (i, j) in atomic_pos_dict[atomic]:

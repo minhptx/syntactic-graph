@@ -1,51 +1,56 @@
 import regex as re
 
 
-class SubStr:
-    def __init__(self, text, start_pos, end_pos):
-        self.text = text
+class Select:
+    def __init__(self, position, start_pos, end_pos, length):
+        self.position = position
         self.start_pos = start_pos
         self.end_pos = end_pos
 
     def __str__(self):
-        return "Substr(%s, %s, %s)" % (self.text, str(self.start_pos), str(self.end_pos))
+        return "Select(%s, %s, %s)" % (self.position, str(self.start_pos), str(self.end_pos))
 
     @staticmethod
-    def generate(value_text, extraction_text):
+    def generate(raw_path, tranformed_path):
         result = []
         position_list = []
-        matches = re.finditer(re.escape(extraction_text), value_text)
+        matches = []
+
+        for edge_1 in raw_path:
+            for edge_2 in tranformed_path:
+                if edge_1.is_subset(edge_2):
+                    matches.append(edge_1)
         
         for match in matches:
             # print(match.start(), match.end(), len(value_text), extraction_text, value_text)
-            if extraction_text.isalpha():
+            if tranformed_path.isalpha():
                 if match.start() == 0:
-                    if match.end() < len(value_text) and value_text[match.end()].isalpha():
+                    if match.end() < len(raw_path) and raw_path[match.end()].isalpha():
                         continue
-                elif match.end() == len(value_text):
-                    if match.start() > 0 and value_text[match.start() - 1].isalpha():
+                elif match.end() == len(raw_path):
+                    if match.start() > 0 and raw_path[match.start() - 1].isalpha():
                         continue
-                elif value_text[match.start() - 1].isalpha() or value_text[match.end()].isalpha():
+                elif raw_path[match.start() - 1].isalpha() or raw_path[match.end()].isalpha():
                     continue
 
-            if extraction_text.isdigit():
+            if tranformed_path.isdigit():
                 if match.start() == 0:
-                    if match.end() < len(value_text) and value_text[match.end()].isdigit():
+                    if match.end() < len(raw_path) and raw_path[match.end()].isdigit():
                         continue
-                elif match.end() == len(value_text):
-                    if match.start() > 0 and value_text[match.start() - 1].isdigit():
+                elif match.end() == len(raw_path):
+                    if match.start() > 0 and raw_path[match.start() - 1].isdigit():
                         continue
-                elif value_text[match.start() - 1].isdigit() and value_text[match.end()].isdigit():
+                elif raw_path[match.start() - 1].isdigit() and raw_path[match.end()].isdigit():
                     continue
 
             position_list.append((match.start(), match.end()))
 
-            start_positions = Position.generate(value_text, match.start())
-            end_positions = Position.generate(value_text, match.end())
+            start_positions = Position.generate(raw_path, match.start())
+            end_positions = Position.generate(raw_path, match.end())
 
             for start_pos in start_positions:
                 for end_pos in end_positions:
-                    result.append(SubStr(extraction_text, start_pos, end_pos))
+                    result.append(Select(tranformed_path, start_pos, end_pos))
         return result, position_list
 
 

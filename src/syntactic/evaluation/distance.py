@@ -1,7 +1,7 @@
 import json
 import os
 import random
-
+import numpy as np
 from collections import defaultdict
 from sklearn.metrics import roc_auc_score
 
@@ -28,16 +28,16 @@ class DistanceEvaluation:
     def create_test_data(self):
         data_set = []
 
-        for i in range(240400):
+        for i in range(100000):
             test_1 = random.choice(self.name_list)
             test_2 = random.choice(self.name_list)
 
             point_1 = random.choice(self.data_dict[test_1])
             point_2 = random.choice(self.data_dict[test_2])
 
-            result = 1
+            result = 0
             if test_1 == test_2:
-                result = 0
+                result = 1
 
             data_set.append((point_1, point_2, result))
 
@@ -50,19 +50,24 @@ class DistanceEvaluation:
 
         result_set = []
         distance_set = []
+        roc_set = []
 
         for point_1, point_2, result in data_set:
             print(point_1, point_2)
-            distance = model.dissimilarity(point_1, point_2)
-            if distance == HierarchicalModel.MAX_DISTANCE:
-                distance = 1
+            distance = model.similarity(point_1, point_2, is_cached=False)
+            if distance == -HierarchicalModel.MAX_DISTANCE:
+                distance = 0
             result_set.append(result)
             distance_set.append(distance)
 
-            print(result, distance)
-        print(len(result_set))
+            print(len(distance_set))
 
-        return roc_auc_score(result_set, distance_set, average="micro")
+            if len(result_set) == 10000:
+                roc_set.append(roc_auc_score(result_set, distance_set))
+                result_set = []
+                distance_set = []
+
+        return np.mean(roc_set)
 
 
 if __name__ == "__main__":
