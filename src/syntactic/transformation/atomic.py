@@ -1,4 +1,5 @@
 import regex as re
+from collections import defaultdict
 
 
 class Select:
@@ -14,12 +15,12 @@ class Select:
     def generate(raw_path, tranformed_path):
         result = []
         position_list = []
-        matches = []
+        matches = defaultdict(lambda :)
 
-        for edge_1 in raw_path:
+        for idx, edge_1 in enumerate(raw_path):
             for edge_2 in tranformed_path:
                 if edge_1.is_subset(edge_2):
-                    matches.append(edge_1)
+                    matches[idx].append(edge_1)
         
         for match in matches:
             # print(match.start(), match.end(), len(value_text), extraction_text, value_text)
