@@ -55,8 +55,6 @@ class DistanceEvaluation:
         for point_1, point_2, result in data_set:
             print(point_1, point_2)
             distance = model.similarity(point_1, point_2, is_cached=False)
-            if distance == -HierarchicalModel.MAX_DISTANCE:
-                distance = 0
             result_set.append(result)
             distance_set.append(distance)
 

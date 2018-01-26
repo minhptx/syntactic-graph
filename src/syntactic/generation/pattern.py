@@ -1,8 +1,8 @@
-import regex as re
 from collections import defaultdict
 
+import regex as re
+
 from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString
-from utils import cache
 
 
 class EdgeValue:
@@ -21,13 +21,9 @@ class EdgeValue:
         return False
 
     def is_subset(self, ev):
-        if self.atomic.is_subset(ev.atomic):
-            if self.nth == ev.nth:
+        if self.atomic.is_subset(ev.atomic) or self.atomic == ev.atomic:
+            if self.nth == ev.nth and ev.length == -1:
                 return True
-        elif self.atomic == ev.atomic:
-            if self.length <= ev.length or (ev.length == -1 and self.length != -1):
-                if self.nth == ev.nth:
-                    return True
 
         return False
 

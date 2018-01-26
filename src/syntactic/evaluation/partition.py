@@ -31,7 +31,7 @@ class PartitionEvaluation:
         nmi_list = []
 
         for size in range(2, 9):
-            for j in range(0, 10):
+            for j in range(0, 1):
                 subset = random.sample(self.name_list, size)
                 data_list = []
                 label_list = []

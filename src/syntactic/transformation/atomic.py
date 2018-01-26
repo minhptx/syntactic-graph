@@ -1,148 +1,124 @@
-import regex as re
 from collections import defaultdict
 
-
-class Select:
-    def __init__(self, position, start_pos, end_pos, length):
-        self.position = position
-        self.start_pos = start_pos
-        self.end_pos = end_pos
-
-    def __str__(self):
-        return "Select(%s, %s, %s)" % (self.position, str(self.start_pos), str(self.end_pos))
-
-    @staticmethod
-    def generate(raw_path, tranformed_path):
-        result = []
-        position_list = []
-        matches = defaultdict(lambda :)
-
-        for idx, edge_1 in enumerate(raw_path):
-            for edge_2 in tranformed_path:
-                if edge_1.is_subset(edge_2):
-                    matches[idx].append(edge_1)
-        
-        for match in matches:
-            # print(match.start(), match.end(), len(value_text), extraction_text, value_text)
-            if tranformed_path.isalpha():
-                if match.start() == 0:
-                    if match.end() < len(raw_path) and raw_path[match.end()].isalpha():
-                        continue
-                elif match.end() == len(raw_path):
-                    if match.start() > 0 and raw_path[match.start() - 1].isalpha():
-                        continue
-                elif raw_path[match.start() - 1].isalpha() or raw_path[match.end()].isalpha():
-                    continue
-
-            if tranformed_path.isdigit():
-                if match.start() == 0:
-                    if match.end() < len(raw_path) and raw_path[match.end()].isdigit():
-                        continue
-                elif match.end() == len(raw_path):
-                    if match.start() > 0 and raw_path[match.start() - 1].isdigit():
-                        continue
-                elif raw_path[match.start() - 1].isdigit() and raw_path[match.end()].isdigit():
-                    continue
-
-            position_list.append((match.start(), match.end()))
-
-            start_positions = Position.generate(raw_path, match.start())
-            end_positions = Position.generate(raw_path, match.end())
-
-            for start_pos in start_positions:
-                for end_pos in end_positions:
-                    result.append(Select(tranformed_path, start_pos, end_pos))
-        return result, position_list
+from syntactic.generation.atomic import *
+from utils.string import jaccard_similarity, jaccard_subset_similarity
 
 
-class Position:
-    def __init__(self, pre_regex, post_regex, index):
-        self.pre_regex = pre_regex
-        self.post_regex = post_regex
-        self.index = index
+class Operation(object):
+    def __init__(self, raw_ev, transformed_ev, *args, **kwargs):
+        self.raw_ev = raw_ev
+        self.transformed_ev = transformed_ev
+        self.score = 0
 
-    def __str__(self):
-        return "Position(%s, %s, %s)" % (str(self.pre_regex), str(self.post_regex), str(self.index))
+    def score(self):
+        return 0
 
     @staticmethod
-    def generate(value_text, index):
-        result = []
-
-        for k_1 in range(0, index):
-            for k_2 in range(index + 1, len(value_text)):
-
-                index_match = 0
-                regex = Regex.generate(value_text[k_1:k_2])
-                matches = list(re.finditer(regex.to_regex(), value_text))
-
-                num_matches = len(matches)
-                for idx, match in enumerate(matches):
-                    if match.start() == k_1:
-                        index_match = idx
-                        break
-
-                pre_regex = Regex.generate(value_text[k_1:index])
-                post_regex = Regex.generate(value_text[index:k_2])
-
-                result.append(Position(pre_regex, post_regex, index_match + 1))
-                result.append(Position(pre_regex, post_regex, -(num_matches - index_match)))
-        return result
+    def check_condition(raw_ev, transformed_ev):
+        pass
 
 
-class CPos:
-    def __init__(self, position):
-        self.position = position
-
-    def __str__(self):
-        return "CPos(%s)" % str(self.position)
-
-
-class Regex:
-    NUMWRD = r"[0-9]"
-    LWRD = r"[a-z]"
-    UWRD = r"[A-Z]"
-    PUNC = ur"\p{P}"
-    SPACE = "\s"
-    TOKEN_TYPES = {"NUM": NUMWRD, "LWD": LWRD, "UWD": UWRD, "PUN": PUNC, "SPACE": SPACE}
-
-    def __init__(self, token_seq):
-        self.token_seq = token_seq
-
-    def __str__(self):
-        return "Regex(%s)" % ",".join([str(x) for x in self.token_seq])
+class Constant(Operation):
+    def __init__(self, raw_ev, transformed_ev):
+        super(Constant, self).__init__(raw_ev, transformed_ev)
 
     @staticmethod
-    def generate(text):
-        token_seq = []
-        for letter in text:
-            token = None
-            for token_type, regex in Regex.TOKEN_TYPES.items():
-                match = re.match(regex, "".join(letter))
-                if match:
-                    if token_type == "PUN":
-                        token = Token(match.group(), match.group())
-                    else:
-                        token = Token(match.group(), token_type)
-                    break
-            if not token:
-                token = Token(letter, "LWD")
-            token_seq.append(token)
-        return Regex(token_seq)
+    def check_condition(raw_ev, transformed_ev):
+        if isinstance(transformed_ev.atomic, Constant):
+            return True
+        else:
+            return False
 
-    def to_regex(self):
-        regex_str = ""
-        for token in self.token_seq:
-            if token.type in self.TOKEN_TYPES:
-                regex_str += self.TOKEN_TYPES[token.type]
-            else:
-                regex_str += re.escape(token.type)
-        return regex_str
+    def score(self):
+        return 1
 
 
-class Token:
-    def __init__(self, text, type):
-        self.text = text
-        self.type = type
+class PartOf(Operation):
+    def __init__(self, raw_ev, transformed_ev):
+        super(PartOf, self).__init__(raw_ev, transformed_ev)
 
-    def __str__(self):
-        return "Token(%s)" % self.type
+    @staticmethod
+    def check_condition(raw_ev, transformed_ev):
+        if raw_ev.atomic != transformed_ev.atomic:
+            return False
+        if raw_ev.length <= transformed_ev.length:
+            return True
+
+    def score(self):
+        return jaccard_subset_similarity(self.raw_ev.values, self.transformed_ev.values)
+
+
+class Upper(Operation):
+    def __init__(self, raw_ev, transformed_ev):
+        super(Upper, self).__init__(raw_ev, transformed_ev)
+
+    @staticmethod
+    def check_condition(raw_ev, transformed_ev):
+        if transformed_ev.atomic == UPPER_CASE and raw_ev in [LOWER_CASE, ALPHABET, PROPER_CASE]:
+            if transformed_ev.length == raw_ev.length:
+                return True
+        return False
+
+    def score(self):
+        value_list = [x.uppercase() for x in self.raw_ev.values]
+        return jaccard_similarity(value_list, self.transformed_ev.values())
+
+
+class Lower(Operation):
+    def __init__(self, raw_ev, transformed_ev):
+        super(Lower, self).__init__(raw_ev, transformed_ev)
+
+    @staticmethod
+    def check_condition(raw_ev, transformed_ev):
+        if transformed_ev.atomic == LOWER_CASE and raw_ev in [UPPER_CASE, ALPHABET, PROPER_CASE]:
+            if transformed_ev.length == raw_ev.length:
+                return True
+        return False
+
+    def score(self):
+        value_list = [x.lowercase() for x in self.raw_ev.values]
+        return jaccard_similarity(value_list, self.transformed_ev.values())
+
+
+class SubStr(Operation):
+    def __init__(self, raw_ev, transformed_ev):
+        super(SubStr, self).__init__(raw_ev, transformed_ev)
+        self.score = -1
+        self.index = 0
+        self.get_best_range()
+
+    def get_best_range(self):
+        length = self.transformed_ev.length
+
+        min_length = min([len(x) for x in self.raw_ev.values])
+
+        score_dict = defaultdict(lambda: 0)
+
+        for i in range(0, min_length - length):
+            value_list = []
+            for value in self.raw_ev.values:
+                value_list.append(value[i: i + length])
+            score_dict[i] = self.score_range(value_list)
+
+            value_list = []
+            for value in self.raw_ev.values:
+                value_list.append(value[i: i + length])
+            score_dict[-i] = self.score_range(value_list)
+
+        self.score = max(score_dict.values())
+        self.index = list(score_dict.keys())[list(score_dict.values()).index(self.score)]
+
+    @staticmethod
+    def check_condition(raw_ev, transformed_ev):
+        if raw_ev.atomic != transformed_ev.atomic or transformed_ev.length == -1:
+            return False
+        if raw_ev.length >= transformed_ev.length or raw_ev.length == -1:
+            return True
+
+    def score(self):
+        if self.score == -1:
+            self.get_best_range()
+        return self.score
+
+    def score_range(self, value_list):
+        return jaccard_similarity(value_list, self.raw_ev.values)
