@@ -24,6 +24,12 @@ class ProperCase(Atomic):
         else:
             return False
 
+    def is_transformable_from(self, atomic):
+        if atomic in [ALPHABET, ALPHANUM, ALPHABET_WS, PROPER_CASE_WS]:
+            return
+        else:
+            return False
+
 
 class UpperCase(Atomic):
     def __init__(self):
@@ -31,6 +37,12 @@ class UpperCase(Atomic):
 
     def is_subset(self, atomic):
         if atomic in [ALPHABET, ALPHANUM, ALPHABET_WS, UPPER_CASE_WS]:
+            return True
+        else:
+            return False
+
+    def is_transformable_from(self, atomic):
+        if atomic in [ALPHABET, ALPHANUM, ALPHABET_WS, PROPER_CASE_WS]:
             return True
         else:
             return False

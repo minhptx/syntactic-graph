@@ -1,147 +1,105 @@
-import regex as re
+from collections import defaultdict
+
+from syntactic.generation.atomic import *
 
 
-class Select:
-    def __init__(self, position, start_pos, end_pos, length):
-        self.position = position
-        self.start_pos = start_pos
-        self.end_pos = end_pos
+class Operation(object):
+    def __init__(self, raw_ev, transformed_ev, *args, **kwargs):
+        self.raw_list = raw_ev
+        self.transformed_list = transformed_ev
+        self.score = 0
 
-    def __str__(self):
-        return "Select(%s, %s, %s)" % (self.position, str(self.start_pos), str(self.end_pos))
+    @staticmethod
+    def check_condition(raw_ev, transformed_ev):
+        pass
+
+
+class Transformation:
 
     @staticmethod
     def generate(raw_path, tranformed_path):
-        result = []
-        position_list = []
-        matches = []
+        matches = defaultdict(lambda: [])
 
-        for edge_1 in raw_path:
-            for edge_2 in tranformed_path:
-                if edge_1.is_subset(edge_2):
-                    matches.append(edge_1)
-        
-        for match in matches:
-            # print(match.start(), match.end(), len(value_text), extraction_text, value_text)
-            if tranformed_path.isalpha():
-                if match.start() == 0:
-                    if match.end() < len(raw_path) and raw_path[match.end()].isalpha():
-                        continue
-                elif match.end() == len(raw_path):
-                    if match.start() > 0 and raw_path[match.start() - 1].isalpha():
-                        continue
-                elif raw_path[match.start() - 1].isalpha() or raw_path[match.end()].isalpha():
-                    continue
-
-            if tranformed_path.isdigit():
-                if match.start() == 0:
-                    if match.end() < len(raw_path) and raw_path[match.end()].isdigit():
-                        continue
-                elif match.end() == len(raw_path):
-                    if match.start() > 0 and raw_path[match.start() - 1].isdigit():
-                        continue
-                elif raw_path[match.start() - 1].isdigit() and raw_path[match.end()].isdigit():
-                    continue
-
-            position_list.append((match.start(), match.end()))
-
-            start_positions = Position.generate(raw_path, match.start())
-            end_positions = Position.generate(raw_path, match.end())
-
-            for start_pos in start_positions:
-                for end_pos in end_positions:
-                    result.append(Select(tranformed_path, start_pos, end_pos))
-        return result, position_list
-
-
-class Position:
-    def __init__(self, pre_regex, post_regex, index):
-        self.pre_regex = pre_regex
-        self.post_regex = post_regex
-        self.index = index
-
-    def __str__(self):
-        return "Position(%s, %s, %s)" % (str(self.pre_regex), str(self.post_regex), str(self.index))
+        for idx_1, edge_1 in enumerate(raw_path):
+            for idx_2, edge_2 in enumerate(tranformed_path):
+                for ev_1 in edge_1.value_list:
+                    for ev_2 in edge_2.value_list:
+                        if ev_1.is_subset(ev_2):
+                            matches[idx_1].append((ev_2, idx_2))
 
     @staticmethod
-    def generate(value_text, index):
-        result = []
-
-        for k_1 in range(0, index):
-            for k_2 in range(index + 1, len(value_text)):
-
-                index_match = 0
-                regex = Regex.generate(value_text[k_1:k_2])
-                matches = list(re.finditer(regex.to_regex(), value_text))
-
-                num_matches = len(matches)
-                for idx, match in enumerate(matches):
-                    if match.start() == k_1:
-                        index_match = idx
-                        break
-
-                pre_regex = Regex.generate(value_text[k_1:index])
-                post_regex = Regex.generate(value_text[index:k_2])
-
-                result.append(Position(pre_regex, post_regex, index_match + 1))
-                result.append(Position(pre_regex, post_regex, -(num_matches - index_match)))
-        return result
+    def get_all_candidates(ev_1, ev_2):
+        candidate_operations = []
+        if ev_2.atomic == LOWER_CASE and ev_1.atomic != LOWER_CASE:
+            candidate_operations.append(Lower(ev_1, ev_2))
+        if ev_2.atomic == UPPER_CASE and ev_1.atomic != UPPER_CASE:
+            candidate_operations.append(Upper(ev_1, ev_2))
+        if ev_1.length != -1 and ev_2 != -1:
+            if ev_1.length < ev_2.length:
+                candidate_operations.append(PartOf(ev_1, ev_2))
+            elif ev_1.length > ev_2.length:
+                for i in range(0, ev_1.length - ev_2.length):
+                    candidate_operations.append(SubStr(ev_1, ev_2, i))
+        elif ev_1.length != -1:
+            candidate_operations.append(PartOf(ev_1, ev_2))
 
 
-class CPos:
-    def __init__(self, position):
-        self.position = position
-
-    def __str__(self):
-        return "CPos(%s)" % str(self.position)
-
-
-class Regex:
-    NUMWRD = r"[0-9]"
-    LWRD = r"[a-z]"
-    UWRD = r"[A-Z]"
-    PUNC = ur"\p{P}"
-    SPACE = "\s"
-    TOKEN_TYPES = {"NUM": NUMWRD, "LWD": LWRD, "UWD": UWRD, "PUN": PUNC, "SPACE": SPACE}
-
-    def __init__(self, token_seq):
-        self.token_seq = token_seq
-
-    def __str__(self):
-        return "Regex(%s)" % ",".join([str(x) for x in self.token_seq])
+class Constant(Operation):
+    def __init__(self, raw_ev, transformed_ev):
+        super(Constant, self).__init__(raw_ev, transformed_ev)
 
     @staticmethod
-    def generate(text):
-        token_seq = []
-        for letter in text:
-            token = None
-            for token_type, regex in Regex.TOKEN_TYPES.items():
-                match = re.match(regex, "".join(letter))
-                if match:
-                    if token_type == "PUN":
-                        token = Token(match.group(), match.group())
-                    else:
-                        token = Token(match.group(), token_type)
-                    break
-            if not token:
-                token = Token(letter, "LWD")
-            token_seq.append(token)
-        return Regex(token_seq)
-
-    def to_regex(self):
-        regex_str = ""
-        for token in self.token_seq:
-            if token.type in self.TOKEN_TYPES:
-                regex_str += self.TOKEN_TYPES[token.type]
-            else:
-                regex_str += re.escape(token.type)
-        return regex_str
+    def check_condition(raw_ev, transformed_ev):
+        if isinstance(transformed_ev.atomic, Constant):
+            return True
+        else:
+            return False
 
 
-class Token:
-    def __init__(self, text, type):
-        self.text = text
-        self.type = type
+class PartOf(Operation):
+    def __init__(self, raw_ev, transformed_ev):
+        super(PartOf, self).__init__(raw_ev, transformed_ev)
 
-    def __str__(self):
-        return "Token(%s)" % self.type
+    @staticmethod
+    def check_condition(raw_ev, transformed_ev):
+        if raw_ev.atomic != transformed_ev.atomic:
+            return False
+        if raw_ev.length <= transformed_ev.length:
+            return True
+
+
+class Upper(Operation):
+    def __init__(self, raw_ev, transformed_ev):
+        super(Upper, self).__init__(raw_ev, transformed_ev)
+
+    @staticmethod
+    def check_condition(raw_ev, transformed_ev):
+        if transformed_ev.atomic == UPPER_CASE and raw_ev in [LOWER_CASE, ALPHABET, PROPER_CASE]:
+            if transformed_ev.length == raw_ev.length:
+                return True
+        return False
+
+
+class Lower(Operation):
+    def __init__(self, raw_ev, transformed_ev):
+        super(Lower, self).__init__(raw_ev, transformed_ev)
+
+    @staticmethod
+    def check_condition(raw_ev, transformed_ev):
+        if transformed_ev.atomic == LOWER_CASE and raw_ev in [UPPER_CASE, ALPHABET, PROPER_CASE]:
+            if transformed_ev.length == raw_ev.length:
+                return True
+        return False
+
+
+class SubStr(Operation):
+    def __init__(self, raw_ev, transformed_ev, start_index):
+        super(SubStr, self).__init__(raw_ev, transformed_ev)
+        self.start_index = start_index
+
+    @staticmethod
+    def check_condition(raw_ev, transformed_ev):
+        if raw_ev.atomic != transformed_ev.atomic:
+            return False
+        if raw_ev.length >= transformed_ev.length:
+            return True
