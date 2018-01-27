@@ -17,10 +17,14 @@ class Operation(object):
     def check_condition(raw_ev, transformed_ev):
         pass
 
+    def transform(self):
+        return self.raw_ev.values
+
 
 class Constant(Operation):
     def __init__(self, raw_ev, transformed_ev):
         super(Constant, self).__init__(raw_ev, transformed_ev)
+        self.constant = transformed_ev.atomic.regex
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
@@ -31,6 +35,9 @@ class Constant(Operation):
 
     def score(self):
         return 1
+
+    def transform(self):
+        return self
 
 
 class PartOf(Operation):

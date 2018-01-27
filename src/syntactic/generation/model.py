@@ -45,10 +45,10 @@ class HierarchicalModel:
                     break
         return cluster_id_list
 
-    def build_hierarchy(self):
+    def build_hierarchy(self, num_cluster=100):
         pre_cluster_map = defaultdict(lambda: [])
 
-        self.seed_cluster()
+        self.seed_cluster(num_cluster)
 
         for text, seed in self.nearest_seeds_map.items():
             print(text, seed, self.sim_map[text][seed])
@@ -57,7 +57,7 @@ class HierarchicalModel:
         for seed, cluster_value_list in pre_cluster_map.items():
             self.clusters.append(Cluster.generate(seed, cluster_value_list))
 
-    def seed_cluster(self):
+    def seed_cluster(self, num_cluster):
 
         pre_min_sim = -1
         min_sim = 1
@@ -67,12 +67,12 @@ class HierarchicalModel:
         text_list.remove(seed_set[0])
 
         while min_sim == 0 or abs(pre_min_sim - min_sim) > 0.1:
+            if len(seed_set) > num_cluster:
+                break
             pre_min_sim = min_sim
             new_seed, min_sim = self.min_sim_sample(text_list, seed_set)
             seed_set.append(new_seed)
             text_list.remove(new_seed)
-
-        return seed_set[:-1], seed_set[-1]
 
     def similarity(self, text_1, text_2, is_cached=True):
         if text_1 in self.graph_map:
