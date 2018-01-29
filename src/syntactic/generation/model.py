@@ -16,10 +16,21 @@ class Cluster:
         self.pattern_graph = pattern_graph
 
     @staticmethod
-    def generate(seed, cluster_value_list):
+    def generate(seed, cluster_value_list, sim_map):
         cluster_graph = Graph.generate(seed)
+        min_sim_sample = min(cluster_value_list, key=lambda x: sim_map[seed][x])
+        min_sim_graph = Graph.generate(min_sim_sample)
+        cluster_graph = cluster_graph.intersect(min_sim_graph)
+        anchor_set = (seed, min_sim_sample)
+
         for cluster_text in cluster_value_list:
-            cluster_graph = cluster_graph.intersect(Graph.generate(cluster_text))
+            print(cluster_text, anchor_set)
+
+            if cluster_graph.is_matched(cluster_text):
+                continue
+            else:
+                graph = Graph.generate(cluster_text)
+                cluster_graph = cluster_graph.intersect(graph)
 
         return Cluster(cluster_value_list + [seed], cluster_graph)
 
@@ -38,6 +49,7 @@ class HierarchicalModel:
     def get_cluster_labels(self):
         cluster_id_list = []
         print(len(self.text_list))
+
         for text in self.text_list:
             for cluster_id, cluster in enumerate(self.clusters):
                 if text in cluster.text_list:
@@ -51,18 +63,18 @@ class HierarchicalModel:
         self.seed_cluster(num_cluster)
 
         for text, seed in self.nearest_seeds_map.items():
-            print(text, seed, self.sim_map[text][seed])
             pre_cluster_map[seed].append(text)
 
         for seed, cluster_value_list in pre_cluster_map.items():
-            self.clusters.append(Cluster.generate(seed, cluster_value_list))
+            self.clusters.append(Cluster.generate(seed, cluster_value_list, self.sim_map))
 
     def seed_cluster(self, num_cluster):
 
         pre_min_sim = -1
         min_sim = 1
         text_list = self.text_list[:]
-        seed_set = [random.choice(self.text_list)]
+
+        seed_set = [sorted(self.text_list, key=lambda x: len(x))[0]]
 
         text_list.remove(seed_set[0])
 
@@ -93,19 +105,17 @@ class HierarchicalModel:
         if not graph:
             return 0
 
-        # print(graph.num_edge(), graph_1.num_edge(), graph_2.num_edge())
+        print(graph.num_edge(), graph_1.num_edge(), graph_2.num_edge())
         return graph.num_edge() * 1.0 / min(graph_1.num_edge(), graph_2.num_edge())
 
     def min_sim_sample(self, text_list, anchor_set):
+        print("Sampling")
         min_sim = 1
         max_sample = None
-
-        print(anchor_set)
 
         for text in text_list:
             max_sim = 0
             for anchor in anchor_set:
-                # print(anchor, text)
                 if text == anchor:
                     self.sim_map[anchor][text] = 1
                 if self.sim_map[anchor][text] == -1:
@@ -125,7 +135,7 @@ class HierarchicalModel:
 
 
 if __name__ == "__main__":
-    df = pd.read_csv("data/input/raw/1st_dimension.csv")
+    # df = pd.read_csv("data/input/raw/1st_dimension.csv")
     # value_list = df.iloc[:, 0].values.tolist()
     # print(value_list)
     # model = HierarchicalModel(value_list)
@@ -136,7 +146,6 @@ if __name__ == "__main__":
     #
     # print(time.time() - start)
 
-    model = HierarchicalModel(None)
+    model = HierarchicalModel("")
 
-    print(model.similarity('3133:72AD:5956:32C2:416B:872F:098F:851B:DDB9:6528:4C6C:BE9A:4F19:0964:30DB:A95A',
-                           '3133:72AD:5956:32C2:416B:872F:098F:851B:DDB9:6528:4C6C:BE9A:4F19:0964:30DB:A95A'))
+    print("Sim", model.similarity(u'19-Sep', u'24-Apr'))

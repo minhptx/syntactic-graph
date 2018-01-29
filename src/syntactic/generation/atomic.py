@@ -163,7 +163,7 @@ class AlphabetWhitespace(Atomic):
 
 class ConstantString(Atomic):
     def __init__(self, text):
-        super(ConstantString, self).__init__("ConstantString(%s)" % text, re.escape(text), "cs")
+        super(ConstantString, self).__init__("ConstantString", re.escape(text), "cs")
 
     def is_subset(self, atomic):
         if re.match(atomic.regex, self.regex):
@@ -189,3 +189,10 @@ PUNCTUATION = Punctuation()
 
 ATOMIC_LIST = [PROPER_CASE, UPPER_CASE, LOWER_CASE, DIGIT, ALPHABET, ALPHANUM, WHITESPACE, PROPER_CASE_WS,
                LOWER_CASE_WS, UPPER_CASE_WS, ALPHABET_WS, PUNCTUATION]
+
+
+if __name__ == "__main__":
+    a = ConstantString("33")
+    b = ConstantString("33")
+
+    assert  a == b

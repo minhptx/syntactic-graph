@@ -39,14 +39,15 @@ class PartitionEvaluation:
 
 
                 for name in subset:
-                    print("Size", size)
                     data_size = 256
                     if len(self.data_dict[name]) <= 256:
                         data_size = len(self.data_dict[name])
+                    print(data_size)
                     data_list.extend(random.sample(self.data_dict[name], data_size))
                     label_list.extend([label] * data_size)
                     label += 1
 
+                print(len(data_list))
                 model = HierarchicalModel(data_list)
                 model.build_hierarchy()
                 cluster_ids = model.get_cluster_labels()

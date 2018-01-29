@@ -16,7 +16,7 @@ class EdgeValue:
             self.values = []
 
     def __eq__(self, ev):
-        if self.atomic == ev.atomic and self.nth == ev.nth and self.length == self.length:
+        if self.atomic == ev.atomic and self.nth == ev.nth and self.length == ev.length:
             return True
         return False
 
@@ -65,7 +65,6 @@ class Graph:
         for start_edge in self.edge_map:
             for end_edge in self.edge_map[start_edge]:
                 count += len(self.edge_map[start_edge][end_edge].value_list)
-
         return count
 
     def simplify(self):
@@ -143,7 +142,7 @@ class Graph:
                     edge = edge_1.join(edge_2)
                     if edge:
                         graph.edge_map[node_1 + node_2][name_1_2 + name_2_2] = edge
-                        if ((name_1_2, name_2_2)) not in visited:
+                        if (name_1_2, name_2_2) not in visited:
                             queue.append((name_1_2, name_2_2))
 
                         if edge.value_list[0].atomic == END_TOKEN:
@@ -162,21 +161,20 @@ class Graph:
             current_node, current_str = stack.pop(0)
 
             for end_node in self.edge_map[current_node]:
-                for edge in self.edge_map[current_node][end_node]:
+                edge = self.edge_map[current_node][end_node]
+                is_passable = False
 
-                    is_passable = False
+                for edge_value in edge.value_list:
+                    if edge_value.atomic == END_TOKEN:
+                        return True
 
-                    for edge_value in edge.value_list:
-                        if edge_value.atomic == END_TOKEN:
-                            return True
+                    match = re.match(r"^" + re.escape(edge_value.atomic.regex), current_str)
+                    if match:
+                        is_passable = True
+                        break
 
-                        match = re.match(r"^" + re.escape(edge_value.atomic.regex), current_str)
-                        if match:
-                            is_passable = True
-                            break
-
-                    if is_passable:
-                        stack.append((end_node, current_str[len(match.group()):]))
+                if is_passable:
+                    stack.append((end_node, current_str[len(match.group()):]))
 
         return False
 

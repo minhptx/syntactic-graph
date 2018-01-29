@@ -1,6 +1,6 @@
-import json
 import os
 from collections import defaultdict
+
 import pandas as pd
 
 from syntactic.generation.model import HierarchicalModel
@@ -39,7 +39,7 @@ class TransformationEvaluation:
                 transformed_graph = transformed_model.clusters[0].pattern_graph
 
                 for raw_cluster in raw_model.clusters:
-                    tranformation_model = TransformationModel(raw_cluster.pattern_graph, transformed_graph)
+                    transformation_model = TransformationModel(raw_cluster.pattern_graph, transformed_graph)
 
-                    transformed_model
+                    pass
 
