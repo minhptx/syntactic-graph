@@ -3,6 +3,7 @@ import random
 import os
 import json
 import numpy as np
+import time
 
 from sklearn.metrics import normalized_mutual_info_score
 
@@ -30,7 +31,7 @@ class PartitionEvaluation:
     def evaluate(self):
         nmi_list = []
 
-        for size in range(2, 9):
+        for size in range(1, 9):
             for j in range(0, 10):
                 subset = random.sample(self.name_list, size)
                 data_list = []
@@ -49,10 +50,13 @@ class PartitionEvaluation:
 
                 print(len(data_list))
                 model = HierarchicalModel(data_list)
+                start = time.time()
                 model.build_hierarchy()
+                print(time.time() - start)
                 cluster_ids = model.get_cluster_labels()
-
-                nmi_list.append(normalized_mutual_info_score(label_list, cluster_ids))
+                result = normalized_mutual_info_score(label_list, cluster_ids)
+                print("Result")
+                nmi_list.append(result)
         return np.mean(nmi_list)
 
 

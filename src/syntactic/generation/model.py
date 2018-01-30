@@ -24,7 +24,7 @@ class Cluster:
         anchor_set = (seed, min_sim_sample)
 
         for cluster_text in cluster_value_list:
-            print(cluster_text, anchor_set)
+            # print("Cluster", cluster_text, anchor_set)
 
             if cluster_graph.is_matched(cluster_text):
                 continue
@@ -41,7 +41,8 @@ class HierarchicalModel:
         self.text_list = text_list
         self.pattern_graph_list = []
         self.clusters = []
-        self.graph_map = defaultdict(lambda: defaultdict(lambda: None))
+        self.intersection_map = defaultdict(lambda: defaultdict(lambda: -1))
+        self.num_edge_map = defaultdict(lambda: 0)
         self.sim_map = defaultdict(lambda: defaultdict(lambda: -1))
         self.nearest_seeds_map = defaultdict(lambda: None)
         self.max_sim = defaultdict(lambda: 0)
@@ -55,6 +56,8 @@ class HierarchicalModel:
                 if text in cluster.text_list:
                     cluster_id_list.append(cluster_id)
                     break
+            else:
+                cluster_id_list.append(-1)
         return cluster_id_list
 
     def build_hierarchy(self, num_cluster=100):
@@ -87,41 +90,52 @@ class HierarchicalModel:
             text_list.remove(new_seed)
 
     def similarity(self, text_1, text_2, is_cached=True):
-        if text_1 in self.graph_map:
-            graph_1 = self.graph_map[text_1]
+        if self.intersection_map[text_1][text_2] != -1:
+            graph = self.intersection_map[text_1][text_2]
         else:
             graph_1 = Graph.generate(text_1)
-        if text_2 in self.graph_map:
-            graph_2 = self.graph_map[text_2]
-        else:
+
             graph_2 = Graph.generate(text_2)
 
-        graph = graph_1.intersect(graph_2)
+            graph = graph_1.intersect(graph_2)
 
-        if is_cached:
-            self.graph_map[text_1] = graph_1
-            self.graph_map[text_2] = graph_2
+            if is_cached:
+                self.intersection_map[text_1][text_2] = graph
+                self.intersection_map[text_1][text_2] = graph
+                self.num_edge_map[text_1] = graph_1.num_edge()
+                self.num_edge_map[text_2] = graph_2.num_edge()
 
         if not graph:
             return 0
 
-        print(text_1, text_2)
-        print(graph.num_edge(), graph_1.num_edge(), graph_2.num_edge())
-        return graph.num_edge() * 1.0 / min(graph_1.num_edge(), graph_2.num_edge())
+        if self.num_edge_map[text_1]:
+            num_edge_1 = self.num_edge_map[text_1]
+        else:
+            num_edge_1 = Graph.generate(text_1).num_edge()
+
+        if self.num_edge_map[text_2]:
+            num_edge_2 = self.num_edge_map[text_2]
+        else:
+            num_edge_2 = Graph.generate(text_2).num_edge()
+
+        # print(graph.num_edge(), num_edge_1, num_edge_2)
+        return graph.num_edge() * 1.0 / min(num_edge_1, num_edge_2)
 
     def min_sim_sample(self, text_list, anchor_set):
-        print("Sampling")
+        # print("Sampling")
         min_sim = 1
         max_sample = None
 
         for text in text_list:
             max_sim = 0
             for anchor in anchor_set:
+                # print("Sample", anchor, text, len(anchor_set))
                 if text == anchor:
                     self.sim_map[anchor][text] = 1
-                if self.sim_map[anchor][text] == -1:
-                    self.sim_map[anchor][text] = self.similarity(anchor, text)
-                    self.sim_map[text][anchor] = self.sim_map[anchor][text]
+                else:
+                    if self.sim_map[anchor][text] == -1:
+                        self.sim_map[anchor][text] = self.similarity(anchor, text, is_cached=False)
+                        self.sim_map[text][anchor] = self.sim_map[anchor][text]
                     # print(self.distance_map[anchor][text])
 
                 if self.sim_map[anchor][text] > max_sim:

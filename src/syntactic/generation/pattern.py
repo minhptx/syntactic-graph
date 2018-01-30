@@ -206,7 +206,7 @@ class Graph:
 
                 sub_str = input_str[i:j]
 
-                if j <= i + 5:
+                if j <= i + 3:
                     graph.edge_map[(i,)][(j,)] = Edge(
                         list(Graph.get_nth_edge_values(ConstantString(sub_str), input_str, i, j)))
                 else:
