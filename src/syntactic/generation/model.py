@@ -105,6 +105,7 @@ class HierarchicalModel:
         if not graph:
             return 0
 
+        print(text_1, text_2)
         print(graph.num_edge(), graph_1.num_edge(), graph_2.num_edge())
         return graph.num_edge() * 1.0 / min(graph_1.num_edge(), graph_2.num_edge())
 

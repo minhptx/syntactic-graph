@@ -216,12 +216,14 @@ class Graph:
                     if (i, j) in atomic_pos_dict[atomic]:
                         left_index = atomic_pos_dict[atomic].index((i, j))
                         right_index = len(atomic_pos_dict[atomic]) - left_index
-                        graph.edge_map[(i,)][(j,)].add_edge_value(EdgeValue(atomic, left_index + 1))  # variable-length
-                        graph.edge_map[(i,)][(j,)].add_edge_value(EdgeValue(atomic, -right_index))  # variable-length
                         graph.edge_map[(i,)][(j,)].add_edge_value(
-                            EdgeValue(atomic, left_index + 1, j - i))  # fixed-length
+                            EdgeValue(atomic, left_index + 1, values=[sub_str]))  # variable-length
                         graph.edge_map[(i,)][(j,)].add_edge_value(
-                            EdgeValue(atomic, -right_index, j - i))  # fixed-length
+                            EdgeValue(atomic, -right_index, values=[sub_str]))  # variable-length
+                        graph.edge_map[(i,)][(j,)].add_edge_value(
+                            EdgeValue(atomic, left_index + 1, j - i, values=[sub_str]))  # fixed-length
+                        graph.edge_map[(i,)][(j,)].add_edge_value(
+                            EdgeValue(atomic, -right_index, j - i, values=[sub_str]))  # fixed-length
 
         return graph
 
@@ -229,4 +231,5 @@ class Graph:
     def get_nth_edge_values(atomic, input_str, i, j):
         left_nth = len(re.findall(atomic.regex, input_str[:i])) + 1
         right_nth = len(re.findall(atomic.regex, input_str[j:])) + 1
-        return EdgeValue(atomic, left_nth), EdgeValue(atomic, -right_nth)
+        return EdgeValue(atomic, left_nth, values=[input_str[i:j]]), EdgeValue(atomic, -right_nth,
+                                                                               values=[input_str[i:j]])
