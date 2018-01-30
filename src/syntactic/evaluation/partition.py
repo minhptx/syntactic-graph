@@ -31,13 +31,12 @@ class PartitionEvaluation:
     def evaluate(self):
         nmi_list = []
 
-        for size in range(1, 9):
-            for j in range(0, 10):
+        for size in range(2, 9):
+            for j in range(0, 3):
                 subset = random.sample(self.name_list, size)
                 data_list = []
                 label_list = []
                 label = 0
-
 
                 for name in subset:
                     data_size = 256
@@ -55,7 +54,8 @@ class PartitionEvaluation:
                 print(time.time() - start)
                 cluster_ids = model.get_cluster_labels()
                 result = normalized_mutual_info_score(label_list, cluster_ids)
-                print("Result")
+                print(label_list, cluster_ids)
+                print("Result", result)
                 nmi_list.append(result)
         return np.mean(nmi_list)
 

@@ -58,7 +58,9 @@ class Edge:
 class Graph:
     def __init__(self, text_list):
         self.edge_map = defaultdict(lambda: defaultdict(lambda: None))
-        self.text_list = text_list
+        self.values = text_list
+        self.start_node = None
+        self.end_node = None
 
     def num_edge(self):
         count = 0
@@ -68,7 +70,7 @@ class Graph:
         return count
 
     def simplify(self):
-        graph = Graph(self.text_list[:])
+        graph = Graph(self.values[:])
         for start_node in self.edge_map:
             for end_node in self.edge_map[start_node]:
                 edge = self.edge_map[start_node][end_node]
@@ -83,7 +85,7 @@ class Graph:
 
     def to_paths(self):
         paths = []
-        start_node = tuple([0] * len(self.text_list))
+        start_node = tuple([0] * len(self.values))
 
         visited = []
 
@@ -115,11 +117,11 @@ class Graph:
 
     def intersect(self, other_graph):
         # print(self, other_graph)
-        graph = Graph(self.text_list + other_graph.text_list)
+        graph = Graph(self.values + other_graph.text_list)
 
-        start_nodes = (tuple([0] * len(self.text_list)), tuple([0] * len(other_graph.text_list)))
+        graph.start_node = (self.start_node, other_graph.start_node)
 
-        queue = [start_nodes]
+        queue = [graph.start_node]
         visited = []
 
         is_connected = False
@@ -147,13 +149,14 @@ class Graph:
 
                         if edge.value_list[0].atomic == END_TOKEN:
                             is_connected = True
+                            graph.end_node = name_1_2 + name_2_2
 
         if not is_connected:
             return None
         return graph
 
     def is_matched(self, input_str):
-        start_node = tuple([0] * len(self.text_list))
+        start_node = tuple([0] * len(self.values))
 
         stack = [(start_node, input_str)]
 
@@ -225,6 +228,8 @@ class Graph:
                         graph.edge_map[(i,)][(j,)].add_edge_value(
                             EdgeValue(atomic, -right_index, j - i, values=[sub_str]))  # fixed-length
 
+        graph.start_node = (0,)
+        graph.end_node = (n,)
         return graph
 
     @staticmethod

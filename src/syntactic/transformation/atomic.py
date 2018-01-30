@@ -37,7 +37,7 @@ class Constant(Operation):
         return 1
 
     def transform(self):
-        return self
+        return self.raw_ev.values
 
 
 class PartOf(Operation):
@@ -53,6 +53,9 @@ class PartOf(Operation):
 
     def score(self):
         return jaccard_subset_similarity(self.raw_ev.values, self.transformed_ev.values)
+
+    def transform(self):
+        return self.raw_ev.values
 
 
 class Upper(Operation):
@@ -70,6 +73,9 @@ class Upper(Operation):
         value_list = [x.uppercase() for x in self.raw_ev.values]
         return jaccard_similarity(value_list, self.transformed_ev.values())
 
+    def transform(self):
+        return [x.toupper() for x in self.raw_ev.values]
+
 
 class Lower(Operation):
     def __init__(self, raw_ev, transformed_ev):
@@ -86,12 +92,16 @@ class Lower(Operation):
         value_list = [x.lowercase() for x in self.raw_ev.values]
         return jaccard_similarity(value_list, self.transformed_ev.values())
 
+    def transform(self):
+        return [x.tolower() for x in self.raw_ev.values]
+
 
 class SubStr(Operation):
     def __init__(self, raw_ev, transformed_ev):
         super(SubStr, self).__init__(raw_ev, transformed_ev)
         self.score = -1
         self.index = 0
+        self.length = transformed_ev.length
         self.get_best_range()
 
     def get_best_range(self):
@@ -129,3 +139,6 @@ class SubStr(Operation):
 
     def score_range(self, value_list):
         return jaccard_similarity(value_list, self.raw_ev.values)
+
+    def transform(self):
+        return [x[self.index:self.index + self.length] for x in self.raw_ev.values]

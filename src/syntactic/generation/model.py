@@ -42,6 +42,7 @@ class HierarchicalModel:
         self.pattern_graph_list = []
         self.clusters = []
         self.intersection_map = defaultdict(lambda: defaultdict(lambda: -1))
+        self.graph_map = defaultdict(lambda: -1)
         self.num_edge_map = defaultdict(lambda: 0)
         self.sim_map = defaultdict(lambda: defaultdict(lambda: -1))
         self.nearest_seeds_map = defaultdict(lambda: None)
@@ -81,7 +82,7 @@ class HierarchicalModel:
 
         text_list.remove(seed_set[0])
 
-        while min_sim == 0 or abs(pre_min_sim - min_sim) > 0.1:
+        while min_sim == 0 or abs(pre_min_sim - min_sim) > 0.1 * pre_min_sim:
             if len(seed_set) > num_cluster:
                 break
             pre_min_sim = min_sim
@@ -93,7 +94,10 @@ class HierarchicalModel:
         if self.intersection_map[text_1][text_2] != -1:
             graph = self.intersection_map[text_1][text_2]
         else:
-            graph_1 = Graph.generate(text_1)
+            if self.graph_map[text_1] == -1:
+                graph_1 = Graph.generate(text_1)
+            else:
+                graph_1 = self.graph_map[text_1]
 
             graph_2 = Graph.generate(text_2)
 
@@ -104,6 +108,7 @@ class HierarchicalModel:
                 self.intersection_map[text_1][text_2] = graph
                 self.num_edge_map[text_1] = graph_1.num_edge()
                 self.num_edge_map[text_2] = graph_2.num_edge()
+                self.graph_map[text_1] = graph_1
 
         if not graph:
             return 0
@@ -129,12 +134,12 @@ class HierarchicalModel:
         for text in text_list:
             max_sim = 0
             for anchor in anchor_set:
-                # print("Sample", anchor, text, len(anchor_set))
+                print("Sample", anchor, text, len(anchor_set))
                 if text == anchor:
                     self.sim_map[anchor][text] = 1
                 else:
                     if self.sim_map[anchor][text] == -1:
-                        self.sim_map[anchor][text] = self.similarity(anchor, text, is_cached=False)
+                        self.sim_map[anchor][text] = self.similarity(anchor, text, is_cached=True)
                         self.sim_map[text][anchor] = self.sim_map[anchor][text]
                     # print(self.distance_map[anchor][text])
 
