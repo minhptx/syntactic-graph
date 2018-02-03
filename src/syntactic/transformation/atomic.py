@@ -10,7 +10,7 @@ class Operation(object):
         self.transformed_ev = transformed_ev
         self.score = 0
 
-    def score(self):
+    def score_function(self):
         return 0
 
     @staticmethod
@@ -28,16 +28,16 @@ class Constant(Operation):
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
-        if isinstance(transformed_ev.atomic, Constant):
+        if isinstance(transformed_ev.atomic, ConstantString) and raw_ev.atomic not in [START_TOKEN, END_TOKEN]:
             return True
         else:
             return False
 
-    def score(self):
+    def score_function(self):
         return 1
 
     def transform(self):
-        return self.raw_ev.values
+        return [self.transformed_ev.values[0] for x in self.raw_ev.values]
 
 
 class PartOf(Operation):
@@ -46,12 +46,14 @@ class PartOf(Operation):
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
+        if raw_ev.atomic in [START_TOKEN, END_TOKEN] or transformed_ev.atomic in [START_TOKEN, END_TOKEN]:
+            return False
         if raw_ev.atomic != transformed_ev.atomic:
             return False
         if raw_ev.length <= transformed_ev.length:
             return True
 
-    def score(self):
+    def score_function(self):
         return jaccard_subset_similarity(self.raw_ev.values, self.transformed_ev.values)
 
     def transform(self):
@@ -64,12 +66,12 @@ class Upper(Operation):
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
-        if transformed_ev.atomic == UPPER_CASE and raw_ev in [LOWER_CASE, ALPHABET, PROPER_CASE]:
+        if transformed_ev.atomic == UPPER_CASE and raw_ev.atomic in [LOWER_CASE, ALPHABET, PROPER_CASE]:
             if transformed_ev.length == raw_ev.length:
                 return True
         return False
 
-    def score(self):
+    def score_function(self):
         value_list = [x.uppercase() for x in self.raw_ev.values]
         return jaccard_similarity(value_list, self.transformed_ev.values())
 
@@ -83,29 +85,31 @@ class Lower(Operation):
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
-        if transformed_ev.atomic == LOWER_CASE and raw_ev in [UPPER_CASE, ALPHABET, PROPER_CASE]:
+        if transformed_ev.atomic == LOWER_CASE and raw_ev.atomic in [UPPER_CASE, ALPHABET, PROPER_CASE]:
             if transformed_ev.length == raw_ev.length:
                 return True
         return False
 
-    def score(self):
-        value_list = [x.lowercase() for x in self.raw_ev.values]
-        return jaccard_similarity(value_list, self.transformed_ev.values())
+    def score_function(self):
+        value_list = [x.lower() for x in self.raw_ev.values]
+        return jaccard_similarity(value_list, self.transformed_ev.values)
 
     def transform(self):
-        return [x.tolower() for x in self.raw_ev.values]
+        return [x.lower() for x in self.raw_ev.values]
 
 
 class SubStr(Operation):
     def __init__(self, raw_ev, transformed_ev):
         super(SubStr, self).__init__(raw_ev, transformed_ev)
-        self.score = -1
-        self.index = 0
+        self.score = 0
+        self.index = -1
         self.length = transformed_ev.length
         self.get_best_range()
 
     def get_best_range(self):
         length = self.transformed_ev.length
+        # print("Value list", self.raw_ev.values)
+        # print("Value list", self.transformed_ev.values)
 
         min_length = min([len(x) for x in self.raw_ev.values])
 
@@ -122,17 +126,24 @@ class SubStr(Operation):
                 value_list.append(value[i: i + length])
             score_dict[-i] = self.score_range(value_list)
 
-        self.score = max(score_dict.values())
-        self.index = list(score_dict.keys())[list(score_dict.values()).index(self.score)]
+        # print(score_dict, min_length, length)
+        if score_dict:
+            self.score = max(score_dict.values())
+        else:
+            self.score = 0
+        if self.score:
+            self.index = list(score_dict.keys())[list(score_dict.values()).index(self.score)]
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
+        if raw_ev.atomic in [START_TOKEN, END_TOKEN] or transformed_ev.atomic in [START_TOKEN, END_TOKEN]:
+            return False
         if raw_ev.atomic != transformed_ev.atomic or transformed_ev.length == -1:
             return False
         if raw_ev.length >= transformed_ev.length or raw_ev.length == -1:
             return True
 
-    def score(self):
+    def score_function(self):
         if self.score == -1:
             self.get_best_range()
         return self.score
@@ -142,3 +153,21 @@ class SubStr(Operation):
 
     def transform(self):
         return [x[self.index:self.index + self.length] for x in self.raw_ev.values]
+
+class Replace(Operation):
+    def __init__(self, raw_ev, transformed_ev):
+        super(Replace, self).__init__(raw_ev, transformed_ev)
+
+    @staticmethod
+    def check_condition(raw_ev, transformed_ev):
+        if transformed_ev == raw_ev:
+            return True
+        return False
+
+    def score_function(self):
+        if self.raw_ev.atomic in [START_TOKEN, END_TOKEN]:
+            return 1
+        return jaccard_similarity(self.raw_ev.values, self.transformed_ev.values)
+
+    def transform(self):
+        return [x for x in self.raw_ev.values]

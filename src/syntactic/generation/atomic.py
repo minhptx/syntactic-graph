@@ -8,6 +8,8 @@ class Atomic(object):
         self.abbr = abbr
 
     def __eq__(self, other):
+        if not other:
+            return False
         return self.name == other.name and self.regex == other.regex and self.abbr == other.abbr
 
     def is_subset(self, other_atomic):
@@ -16,7 +18,7 @@ class Atomic(object):
 
 class ProperCase(Atomic):
     def __init__(self):
-        super(ProperCase, self).__init__("ProperCase", "[A-Z][a-z]+", "Pp")
+        super(ProperCase, self).__init__("ProperCase", r"\p{Lt}+", "Pp")
 
     def is_subset(self, atomic):
         if atomic in [ALPHABET, ALPHANUM, ALPHABET_WS, PROPER_CASE_WS]:
@@ -33,7 +35,7 @@ class ProperCase(Atomic):
 
 class UpperCase(Atomic):
     def __init__(self):
-        super(UpperCase, self).__init__("Uppercase", "[A-Z]+", "U")
+        super(UpperCase, self).__init__("Uppercase", r"\p{Lu}+", "U")
 
     def is_subset(self, atomic):
         if atomic in [ALPHABET, ALPHANUM, ALPHABET_WS, UPPER_CASE_WS]:
@@ -50,7 +52,7 @@ class UpperCase(Atomic):
 
 class LowerCase(Atomic):
     def __init__(self):
-        super(LowerCase, self).__init__("LowerCase", "[a-z]+", "l")
+        super(LowerCase, self).__init__("LowerCase", r"\p{Ll}+", "l")
 
     def is_subset(self, atomic):
         if atomic in [ALPHABET, ALPHANUM, ALPHABET_WS, LOWER_CASE_WS]:
@@ -61,7 +63,7 @@ class LowerCase(Atomic):
 
 class Digit(Atomic):
     def __init__(self):
-        super(Digit, self).__init__("Digit", r"\d+", "d")
+        super(Digit, self).__init__("Digit", r"\p{N}+", "d")
 
     def is_subset(self, atomic):
         if atomic in [ALPHANUM]:
@@ -72,7 +74,7 @@ class Digit(Atomic):
 
 class Alphabet(Atomic):
     def __init__(self):
-        super(Alphabet, self).__init__("Alphabet", r"[A-Za-z]+", "a")
+        super(Alphabet, self).__init__("Alphabet", r"\p{L}+", "a")
 
     def is_subset(self, atomic):
         if atomic in [ALPHANUM, ALPHABET_WS]:
@@ -89,7 +91,7 @@ class Alphanumeric(Atomic):
 
 class Whitespace(Atomic):
     def __init__(self):
-        super(Whitespace, self).__init__("Whitespace", r"\s+", "s")
+        super(Whitespace, self).__init__("Whitespace", r"\p{Z}+", "s")
 
     def is_subset(self, atomic):
         if atomic in [UPPER_CASE_WS, LOWER_CASE_WS, PROPER_CASE_WS, ALPHABET_WS]:
@@ -100,7 +102,7 @@ class Whitespace(Atomic):
 
 class Punctuation(Atomic):
     def __init__(self):
-        super(Punctuation, self).__init__("Punctuation", ur"(\p{P}|\p{S})+", ".")
+        super(Punctuation, self).__init__("Punctuation", r"(\p{P}|\p{S})+", ".")
 
 
 class StartToken(Atomic):
@@ -116,7 +118,7 @@ class EndToken(Atomic):
 class ProperCaseWhitespace(Atomic):
     def __init__(self):
         super(ProperCaseWhitespace, self).__init__(
-            "ProperCaseWhitespace", r"[A-Z][a-z]+(\s+[A-Z][a-z]+)*", "ps")
+            "ProperCaseWhitespace", r"\p{Lt}+(\p{Z}+\p{L}+)*", "ps")
 
     def is_subset(self, atomic):
         if atomic in [ALPHABET_WS]:
@@ -128,7 +130,7 @@ class ProperCaseWhitespace(Atomic):
 class UpperCaseWhitespace(Atomic):
     def __init__(self):
         super(UpperCaseWhitespace, self).__init__(
-            "UpperCaseWhitespace", r"[A-Z]+(\s+[A-Z]+)*", "Cs")
+            "UpperCaseWhitespace", r"\p{Lu}+(\p{Z}+\p{Lu}+)*", "Cs")
 
     def is_subset(self, atomic):
         if atomic in [ALPHABET_WS]:
@@ -140,7 +142,7 @@ class UpperCaseWhitespace(Atomic):
 class LowerCaseWhitespace(Atomic):
     def __init__(self):
         super(LowerCaseWhitespace, self).__init__(
-            "LowerCaseWhitespace", r"[a-z]+(\s+[a-z]+)*", "ls")
+            "LowerCaseWhitespace", r"\p{Ll}+(\p{Z}+\p{Ll}+)*", "ls")
 
     def is_subset(self, atomic):
         if atomic in [ALPHABET_WS]:
@@ -149,13 +151,36 @@ class LowerCaseWhitespace(Atomic):
             return False
 
 
+class AlphabetPunctuation(Atomic):
+    def __init__(self):
+        super(AlphabetPunctuation, self).__init__(
+            "AlphabetPunctuation", r"(\p{P}|\p{S}|\p{L}|\s)+", "ap")
+
+    def is_subset(self, atomic):
+        if atomic in [ALPHA_PUNC]:
+            return True
+        else:
+            return False
+
+
+class Any(Atomic):
+    def __init__(self):
+        super(Any, self).__init__("AlphabetPunctuation", r".+", "any")
+
+    def is_subset(self, atomic):
+        if atomic in [ANY]:
+            return True
+        else:
+            return False
+
+
 class AlphabetWhitespace(Atomic):
     def __init__(self):
         super(AlphabetWhitespace, self).__init__(
-            "AlphabetWhitespace", r"[A-Za-z]+(\s+[A-Za-z]+)*", "as")
+            "AlphabetWhitespace", r"\p{L}+(\p{Z}+\p{L}+)*", "as")
 
     def is_subset(self, atomic):
-        if atomic in [ALPHABET_WS]:
+        if atomic in [ALPHABET_WS, ALPHA_PUNC]:
             return True
         else:
             return False
@@ -186,13 +211,14 @@ UPPER_CASE_WS = UpperCaseWhitespace()
 LOWER_CASE_WS = LowerCaseWhitespace()
 ALPHABET_WS = AlphabetWhitespace()
 PUNCTUATION = Punctuation()
+ALPHA_PUNC = AlphabetPunctuation()
+ANY = Any()
 
 ATOMIC_LIST = [PROPER_CASE, UPPER_CASE, LOWER_CASE, DIGIT, ALPHABET, ALPHANUM, WHITESPACE, PROPER_CASE_WS,
-               LOWER_CASE_WS, UPPER_CASE_WS, ALPHABET_WS, PUNCTUATION]
-
+               LOWER_CASE_WS, UPPER_CASE_WS, ALPHABET_WS, PUNCTUATION, ALPHA_PUNC, ANY]
 
 if __name__ == "__main__":
     a = ConstantString("33")
     b = ConstantString("33")
 
-    assert  a == b
+    assert a == b

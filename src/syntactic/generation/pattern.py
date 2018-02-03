@@ -2,23 +2,22 @@ from collections import defaultdict
 
 import regex as re
 
-from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString
+from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString, Any, ANY
 
 
 class EdgeValue:
-    def __init__(self, atomic, nth, length=-1, values=None):
+    def __init__(self, atomic, nth, length=-1, neighbor=None, values=None):
         self.atomic = atomic
         self.nth = nth
         self.length = length
+        self.neighbor = neighbor
         if values:
             self.values = values
         else:
             self.values = []
 
     def __eq__(self, ev):
-        if self.atomic == ev.atomic and self.nth == ev.nth and self.length == ev.length:
-            return True
-        return False
+        return self.atomic == ev.atomic and self.nth == ev.nth and self.length == ev.length and self.neighbor == ev.neighbor
 
     def is_subset(self, ev):
         if self.atomic.is_subset(ev.atomic) or self.atomic == ev.atomic:
@@ -29,7 +28,7 @@ class EdgeValue:
 
     def join(self, ev):
         if self == ev:
-            return EdgeValue(self.atomic, self.nth, self.length, self.values + ev.values)
+            return EdgeValue(self.atomic, self.nth, self.length, self.neighbor, values=self.values + ev.values)
 
 
 class Edge:
@@ -57,7 +56,7 @@ class Edge:
 
 class Graph:
     def __init__(self, text_list):
-        self.edge_map = defaultdict(lambda: defaultdict(lambda: None))
+        self.edge_map = defaultdict(lambda: defaultdict(lambda: Edge([])))
         self.values = text_list
         self.start_node = None
         self.end_node = None
@@ -77,6 +76,8 @@ class Graph:
                 minimal_list = edge.value_list[:]
                 for ev_1 in edge.value_list:
                     for ev_2 in edge.value_list:
+                        if ev_2 not in minimal_list:
+                            continue
                         if ev_1.is_subset(ev_2):
                             minimal_list.remove(ev_2)
 
@@ -117,11 +118,11 @@ class Graph:
 
     def intersect(self, other_graph):
         # print(self, other_graph)
-        graph = Graph(self.values + other_graph.text_list)
+        graph = Graph(self.values + other_graph.values)
 
-        graph.start_node = (self.start_node, other_graph.start_node)
+        graph.start_node = self.start_node + other_graph.start_node
 
-        queue = [graph.start_node]
+        queue = [(self.start_node, other_graph.start_node)]
         visited = []
 
         is_connected = False
@@ -186,9 +187,9 @@ class Graph:
         atomic_pos_dict = defaultdict(lambda: [])
 
         for atomic in ATOMIC_LIST:
-            matches = re.finditer(atomic.regex, input_str)
+            matches = re.finditer(atomic.regex, input_str[1:-1])
             for match in matches:
-                atomic_pos_dict[atomic].append((match.start(), match.end()))
+                atomic_pos_dict[atomic.name].append((match.start() + 1, match.end() + 1))
 
         return atomic_pos_dict
 
@@ -210,15 +211,21 @@ class Graph:
                 sub_str = input_str[i:j]
 
                 if j <= i + 3:
+                    atomic = ConstantString(sub_str)
+                    left_nth, right_nth = Graph.get_nth_edge_values(atomic, input_str, i, j)
                     graph.edge_map[(i,)][(j,)] = Edge(
-                        list(Graph.get_nth_edge_values(ConstantString(sub_str), input_str, i, j)))
-                else:
-                    graph.edge_map[(i,)][(j,)] = Edge([])
+                        [EdgeValue(atomic, left_nth, values=[sub_str]), EdgeValue(atomic, right_nth, values=[sub_str])])
 
                 for atomic in ATOMIC_LIST:
-                    if (i, j) in atomic_pos_dict[atomic]:
-                        left_index = atomic_pos_dict[atomic].index((i, j))
-                        right_index = len(atomic_pos_dict[atomic]) - left_index
+                    if (i, j) in atomic_pos_dict[atomic.name]:
+                        left_index = atomic_pos_dict[atomic.name].index((i, j))
+                        right_index = len(atomic_pos_dict[atomic.name]) - left_index
+
+                        graph.edge_map[(1,)][(i,)].add_edge_value(
+                            EdgeValue(ANY, 1, neighbor=atomic, values=[input_str[1:i]]))
+                        graph.edge_map[(j,)][(n - 1,)].add_edge_value(
+                            EdgeValue(ANY, -1, neighbor=atomic, values=[input_str[j:n - 1]]))
+
                         graph.edge_map[(i,)][(j,)].add_edge_value(
                             EdgeValue(atomic, left_index + 1, values=[sub_str]))  # variable-length
                         graph.edge_map[(i,)][(j,)].add_edge_value(
@@ -227,14 +234,23 @@ class Graph:
                             EdgeValue(atomic, left_index + 1, j - i, values=[sub_str]))  # fixed-length
                         graph.edge_map[(i,)][(j,)].add_edge_value(
                             EdgeValue(atomic, -right_index, j - i, values=[sub_str]))  # fixed-length
-
+                # for atomic in ATOMIC_LIST:
+                #     left_nth, right_nth = Graph.get_nth_edge_values(atomic, input_str, i, j)
+                #     graph.edge_map[(i,)][(j,)].add_edge_value(
+                #         EdgeValue(atomic, left_nth + 1, values=[sub_str]))  # variable-length
+                #     graph.edge_map[(i,)][(j,)].add_edge_value(
+                #         EdgeValue(atomic, right_nth, values=[sub_str]))  # variable-length
+                #     graph.edge_map[(i,)][(j,)].add_edge_value(
+                #         EdgeValue(atomic, left_nth + 1, j - i, values=[sub_str]))  # fixed-length
+                #     graph.edge_map[(i,)][(j,)].add_edge_value(
+                #         EdgeValue(atomic, right_nth, j - i, values=[sub_str]))  # fixed-length
         graph.start_node = (0,)
         graph.end_node = (n,)
+
         return graph
 
     @staticmethod
     def get_nth_edge_values(atomic, input_str, i, j):
         left_nth = len(re.findall(atomic.regex, input_str[:i])) + 1
         right_nth = len(re.findall(atomic.regex, input_str[j:])) + 1
-        return EdgeValue(atomic, left_nth, values=[input_str[i:j]]), EdgeValue(atomic, -right_nth,
-                                                                               values=[input_str[i:j]])
+        return left_nth, -right_nth

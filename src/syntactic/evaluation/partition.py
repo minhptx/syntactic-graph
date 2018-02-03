@@ -1,10 +1,10 @@
-from collections import defaultdict
-import random
-import os
 import json
-import numpy as np
+import os
+import random
 import time
+from collections import defaultdict
 
+import numpy as np
 from sklearn.metrics import normalized_mutual_info_score
 
 from syntactic.generation.model import HierarchicalModel
@@ -42,20 +42,20 @@ class PartitionEvaluation:
                     data_size = 256
                     if len(self.data_dict[name]) <= 256:
                         data_size = len(self.data_dict[name])
-                    print(data_size)
+                    # print(data_size)
                     data_list.extend(random.sample(self.data_dict[name], data_size))
                     label_list.extend([label] * data_size)
                     label += 1
 
-                print(len(data_list))
+                # print(len(data_list))
                 model = HierarchicalModel(data_list)
                 start = time.time()
                 model.build_hierarchy()
                 print(time.time() - start)
                 cluster_ids = model.get_cluster_labels()
                 result = normalized_mutual_info_score(label_list, cluster_ids)
-                print(label_list, cluster_ids)
-                print("Result", result)
+                # print(label_list, cluster_ids)
+                # print("Result", result)
                 nmi_list.append(result)
         return np.mean(nmi_list)
 

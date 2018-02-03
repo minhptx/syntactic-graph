@@ -1,8 +1,9 @@
 import json
 import os
 import random
-import numpy as np
 from collections import defaultdict
+
+import numpy as np
 from sklearn.metrics import roc_auc_score
 
 from syntactic.generation.model import HierarchicalModel
@@ -53,12 +54,12 @@ class DistanceEvaluation:
         roc_set = []
 
         for point_1, point_2, result in data_set:
-            print(point_1, point_2)
+            # print(point_1, point_2)
             distance = model.similarity(point_1, point_2, is_cached=False)
             result_set.append(result)
             distance_set.append(distance)
 
-            print(len(distance_set))
+            # print(len(distance_set))
 
             if len(result_set) == 10000:
                 roc_set.append(roc_auc_score(result_set, distance_set))

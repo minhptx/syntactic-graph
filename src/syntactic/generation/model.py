@@ -1,8 +1,6 @@
 import random
-import time
 from collections import defaultdict
 
-import pandas as pd
 from syntactic.generation.pattern import Graph
 
 
@@ -17,20 +15,29 @@ class Cluster:
 
     @staticmethod
     def generate(seed, cluster_value_list, sim_map):
-        cluster_graph = Graph.generate(seed)
-        min_sim_sample = min(cluster_value_list, key=lambda x: sim_map[seed][x])
+        # print("Cluster list", cluster_value_list, seed)
+        seed_graph = Graph.generate(seed)
+        if cluster_value_list:
+            min_sim_sample = min(cluster_value_list, key=lambda x: sim_map[seed][x])
+        else:
+            return Cluster([seed], seed_graph)
+        # print(min_sim_sample)
         min_sim_graph = Graph.generate(min_sim_sample)
-        cluster_graph = cluster_graph.intersect(min_sim_graph)
-        anchor_set = (seed, min_sim_sample)
+        cluster_graph = seed_graph.intersect(min_sim_graph)
+
+        # print("Cluster Graph", cluster_graph)
 
         for cluster_text in cluster_value_list:
-            # print("Cluster", cluster_text, anchor_set)
-
-            if cluster_graph.is_matched(cluster_text):
+            if "^" + cluster_text + "$" in cluster_graph.values or cluster_graph.is_matched(cluster_text):
                 continue
             else:
                 graph = Graph.generate(cluster_text)
-                cluster_graph = cluster_graph.intersect(graph)
+                result = cluster_graph.intersect(graph)
+                if result:
+                    cluster_graph = result
+                else:
+                    result =  seed_graph.intersect(graph)
+                    cluster_graph = cluster_graph.intersect(result)
 
         return Cluster(cluster_value_list + [seed], cluster_graph)
 
@@ -38,7 +45,7 @@ class Cluster:
 class HierarchicalModel:
 
     def __init__(self, text_list):
-        self.text_list = text_list
+        self.values = text_list
         self.pattern_graph_list = []
         self.clusters = []
         self.intersection_map = defaultdict(lambda: defaultdict(lambda: -1))
@@ -50,9 +57,9 @@ class HierarchicalModel:
 
     def get_cluster_labels(self):
         cluster_id_list = []
-        print(len(self.text_list))
+        # print(len(self.text_list))
 
-        for text in self.text_list:
+        for text in self.values:
             for cluster_id, cluster in enumerate(self.clusters):
                 if text in cluster.text_list:
                     cluster_id_list.append(cluster_id)
@@ -64,31 +71,51 @@ class HierarchicalModel:
     def build_hierarchy(self, num_cluster=100):
         pre_cluster_map = defaultdict(lambda: [])
 
-        self.seed_cluster(num_cluster)
+        seed_set = self.seed_cluster(num_cluster)
 
-        for text, seed in self.nearest_seeds_map.items():
-            pre_cluster_map[seed].append(text)
+        covered_list = self.values[:]
 
-        for seed, cluster_value_list in pre_cluster_map.items():
-            self.clusters.append(Cluster.generate(seed, cluster_value_list, self.sim_map))
+        while covered_list:
+            text_list = random.sample(covered_list, 100)
+            self
+
+            for seed in seed_set:
+                text_list.remove(seed)
+
+            for text in text_list:
+                if text not in self.nearest_seeds_map:
+                    pre_cluster_map[text] = []
+                else:
+                    pre_cluster_map[self.nearest_seeds_map[text]].append(text)
+
+            # print(pre_cluster_map)
+
+            for seed, cluster_value_list in pre_cluster_map.items():
+                self.clusters.append(Cluster.generate(seed, cluster_value_list, self.sim_map))
+
+            for text in text_list:
+
 
     def seed_cluster(self, num_cluster):
 
         pre_min_sim = -1
-        min_sim = 1
-        text_list = self.text_list[:]
+        min_sim = 0
+        text_list = self.values[:]
 
-        seed_set = [sorted(self.text_list, key=lambda x: len(x))[0]]
+        print(self.values)
+        seed_set = [sorted(self.values, key=lambda x: len(x))[0]]
 
-        text_list.remove(seed_set[0])
 
-        while min_sim == 0 or abs(pre_min_sim - min_sim) > 0.1 * pre_min_sim:
-            if len(seed_set) > num_cluster:
-                break
+        while min_sim == 0 or (abs(pre_min_sim - min_sim) > 0.2 and min_sim < 0.8):
+            # print(pre_min_sim, min_sim)
             pre_min_sim = min_sim
             new_seed, min_sim = self.min_sim_sample(text_list, seed_set)
+            print("Seed", new_seed, min_sim, seed_set, pre_min_sim)
+            if new_seed in seed_set or not new_seed:
+                return seed_set
             seed_set.append(new_seed)
             text_list.remove(new_seed)
+        return seed_set[:-1]
 
     def similarity(self, text_1, text_2, is_cached=True):
         if self.intersection_map[text_1][text_2] != -1:
@@ -134,7 +161,6 @@ class HierarchicalModel:
         for text in text_list:
             max_sim = 0
             for anchor in anchor_set:
-                print("Sample", anchor, text, len(anchor_set))
                 if text == anchor:
                     self.sim_map[anchor][text] = 1
                 else:
@@ -145,6 +171,7 @@ class HierarchicalModel:
 
                 if self.sim_map[anchor][text] > max_sim:
                     max_sim = self.sim_map[anchor][text]
+                    # if self.sim_map[anchor][text] > 0:
                     self.nearest_seeds_map[text] = anchor
 
             self.max_sim[text] = max_sim
@@ -167,5 +194,9 @@ if __name__ == "__main__":
     # print(time.time() - start)
 
     model = HierarchicalModel("")
+    graph_1 = Graph.generate(u'Male')
+    graph_2 = Graph.generate(u'Undetermined')
+    graph_3 = Graph.generate(u"Male")
 
-    print("Sim", model.similarity(u'19-Sep', u'24-Apr'))
+    graph = graph_1.intersect(graph_2)
+    graph = graph.intersect(graph_3)

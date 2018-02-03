@@ -1,14 +1,12 @@
-import os
 from collections import defaultdict
 
-import numpy as np
+import os
 import pandas as pd
 
 from syntactic.generation.model import HierarchicalModel
-from syntactic.transformation.model import TransformationModel
 
 
-class TransformationEvaluation:
+class SimplicationEvaluation:
     def __init__(self):
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
@@ -43,42 +41,12 @@ class TransformationEvaluation:
             transformed_model = HierarchicalModel(transformed_list)
             transformed_model.build_hierarchy()
 
-            cost_map = defaultdict(lambda: defaultdict(lambda: float("inf")))
-            result_map = defaultdict(lambda: defaultdict(lambda: None))
-
-            length = len(groundtruth_list)
-
             for idx_1, raw_cluster in enumerate(raw_model.clusters):
                 for idx_2, transformed_cluster in enumerate(transformed_model.clusters):
-                    transformation_model = TransformationModel(raw_cluster.pattern_graph,
-                                                               transformed_cluster.pattern_graph)
-
-                    result, cost = transformation_model.generate_program()
-
-                    cost_map[idx_1][
-                        idx_2] = cost - transformed_cluster.pattern_graph.num_edge() / raw_cluster.pattern_graph.num_edge()
-                    result_map[idx_1][idx_2] = result
-
-                for idx_1 in result_map:
-                    idx_2 = min(cost_map[idx_1].items(), key=lambda x: x[1])[0]
-                    result = result_map[idx_1][idx_2]
-                    for values in result.values():
-                        value_str = "".join(values)
-                        print(value_str)
-
-                        if value_str in groundtruth_list:
-                            groundtruth_list = [x for x in groundtruth_list if x != value_str]
-
-            wrong_size = len([x for x in groundtruth_list if x])
-            accuracy = 1 - wrong_size * 1.0 / length
-            print([x for x in groundtruth_list if x])
-
-            accuracy_list.append(accuracy)
-            print(accuracy)
-
-        print(np.mean(accuracy_list))
+                    print(raw_cluster.pattern_graph.simplify())
+                    print(transformed_cluster.pattern_graph.simplify())
 
 
 if __name__ == "__main__":
-    evaluation = TransformationEvaluation()
+    evaluation = SimplicationEvaluation()
     print(evaluation.read_data())
