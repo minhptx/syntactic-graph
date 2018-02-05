@@ -37,6 +37,7 @@ class MappingModel:
                 print(result)
                 score_dict[format_1.id][format_2.id] = result[1]
                 column_mapped_dict[format_1.id][format_2.id] = result[0]
+            print(mapped_dict)
             mapped_dict[format_1.id] = sorted(score_dict[format_1.id].items(), key=lambda x: x[1], reverse=True)[0][
                 0]
 

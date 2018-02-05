@@ -58,7 +58,8 @@ class MappingEvaluation:
                     true_count += 1
                 count += 1
 
-            accuracy_list.append(true_count * 1.0 / count)
+            if count:
+                accuracy_list.append(true_count * 1.0 / count)
         return accuracy_list
 
 if __name__ == "__main__":

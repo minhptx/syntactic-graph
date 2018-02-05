@@ -129,6 +129,8 @@ class HierarchicalModel:
             min_sim_list.append(min_sim)
 
             print(min_sim_list, new_seed, seed_set)
+            if not new_seed:
+                return seed_set
             seed_set.append(new_seed)
             text_list.remove(new_seed)
 

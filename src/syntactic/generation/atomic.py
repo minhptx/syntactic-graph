@@ -187,7 +187,7 @@ class AlphabetWhitespace(Atomic):
 
 class Text(Atomic):
     def __init__(self):
-        super(Text, self).__init__("Text", r"\p{Lu}([\p{L}\p{P}]+|\p{Z}+|[\p{N}\p{P}]+)+", "txt")
+        super(Text, self).__init__("Text", r"([\p{L}\p{P}]+|\p{Z}+|[\p{N}\p{P}]+)+", "txt")
 
     def is_subset(self, other_atomic):
         return False
