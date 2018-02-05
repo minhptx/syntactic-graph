@@ -2,7 +2,8 @@ from collections import defaultdict
 
 import regex as re
 
-from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString, Any, ANY
+from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString
+from utils.string import lcs
 
 
 class EdgeValue:
@@ -129,6 +130,7 @@ class Graph:
 
         while queue:
             node_1, node_2 = queue.pop()
+            # print(node_1, node_2)
             visited.append((node_1, node_2))
 
             for name_1_2 in self.edge_map[node_1]:
@@ -156,40 +158,39 @@ class Graph:
             return None
         return graph
 
-    def is_matched(self, input_str):
-        start_node = tuple([0] * len(self.values))
+    def is_matched(self, input_str, is_add=False):
 
-        stack = [(start_node, input_str)]
+        stack = [(self.start_node, input_str)]
 
         while stack:
             current_node, current_str = stack.pop(0)
+            # print(current_node, current_str)
 
             for end_node in self.edge_map[current_node]:
                 edge = self.edge_map[current_node][end_node]
-                is_passable = False
 
                 for edge_value in edge.value_list:
                     if edge_value.atomic == END_TOKEN:
                         return True
 
-                    match = re.match(r"^" + re.escape(edge_value.atomic.regex), current_str)
-                    if match:
-                        is_passable = True
-                        break
-
-                if is_passable:
-                    stack.append((end_node, current_str[len(match.group()):]))
-
+                    match = re.match(edge_value.atomic.regex, current_str)
+                    if match and match.start() == 0:
+                        if (end_node, current_str[len(match.group()):]) not in stack:
+                            stack.append((end_node, current_str[len(match.group()):]))
+                        if is_add:
+                            edge_value.values.append(match.group())
         return False
+
+
 
     @staticmethod
     def atomic_profile(input_str):
         atomic_pos_dict = defaultdict(lambda: [])
 
         for atomic in ATOMIC_LIST:
-            matches = re.finditer(atomic.regex, input_str[1:-1])
+            matches = re.finditer(atomic.regex, input_str)
             for match in matches:
-                atomic_pos_dict[atomic.name].append((match.start() + 1, match.end() + 1))
+                atomic_pos_dict[atomic.name].append((match.start(), match.end()))
 
         return atomic_pos_dict
 
@@ -221,10 +222,10 @@ class Graph:
                         left_index = atomic_pos_dict[atomic.name].index((i, j))
                         right_index = len(atomic_pos_dict[atomic.name]) - left_index
 
-                        graph.edge_map[(1,)][(i,)].add_edge_value(
-                            EdgeValue(ANY, 1, neighbor=atomic, values=[input_str[1:i]]))
-                        graph.edge_map[(j,)][(n - 1,)].add_edge_value(
-                            EdgeValue(ANY, -1, neighbor=atomic, values=[input_str[j:n - 1]]))
+                        # graph.edge_map[(1,)][(i,)].add_edge_value(
+                        #     EdgeValue(ANY, 1, neighbor=atomic, values=[input_str[1:i]]))
+                        # graph.edge_map[(j,)][(n - 1,)].add_edge_value(
+                        #     EdgeValue(ANY, -1, neighbor=atomic, values=[input_str[j:n - 1]]))
 
                         graph.edge_map[(i,)][(j,)].add_edge_value(
                             EdgeValue(atomic, left_index + 1, values=[sub_str]))  # variable-length
@@ -247,6 +248,76 @@ class Graph:
         graph.start_node = (0,)
         graph.end_node = (n,)
 
+        return graph
+
+    @staticmethod
+    def generate_from_list(seed, text_list, sim_map):
+        seed = "|".join(list(seed))
+        min_sim_sample = min(text_list, key=lambda x: sim_map[seed][x])
+        min_sim_sample = "|".join(list(min_sim_sample))
+        print(min_sim_sample, seed)
+        common_str = lcs(seed, min_sim_sample)
+        for cluster_value in text_list:
+            print("|".join(list(cluster_value)), common_str)
+
+            common_str = lcs(common_str, "|".join(list(cluster_value)))
+
+        constant_list = [x for x in re.split(r"\|\|+", common_str) if x]
+
+        constant_list = [x.replace("|", "") for x in constant_list]
+
+        regex = "(.*)" + "(.*)".join(["(%s)" % re.escape(x) for x in constant_list]) + "(.*)"
+
+        slot_values = defaultdict(lambda: [])
+
+        for text in text_list:
+            matching = re.match(regex, text)
+            if matching:
+                for idx, match in enumerate(matching.groups()):
+                    slot_values[idx + 1].append(match)
+
+        value_list = []
+
+        for idx in slot_values:
+            if [x for x in set(slot_values[idx]) if x]:
+                value_list.append(slot_values[idx])
+
+        graph = Graph(text_list)
+
+        n = len(value_list) + 2
+
+        graph.edge_map[(0,)][(1,)] = Edge([EdgeValue(START_TOKEN, 1)])
+        graph.edge_map[(n - 1,)][(n,)] = Edge([EdgeValue(END_TOKEN, 1)])
+
+        for idx in range(len(value_list)):
+            i = idx + 1
+            for atomic in ATOMIC_LIST:
+                for value in value_list[idx]:
+                    if not re.match("^" + atomic.regex + "$", value):
+                        break
+                else:
+                    length_list = [len(x) for x in value_list[idx]]
+                    if max(length_list) == min(length_list):
+                        length = length_list[0]
+                    else:
+                        length = -1
+                    graph.edge_map[(i,)][(i + 1,)].add_edge_value(EdgeValue(atomic, -1, length, values=value_list[idx]))
+            if len(set(value_list[idx])) == 1:
+                for j in range(0, len(value_list[idx][0])):
+
+                    for k in range(j + 1, len(value_list[idx][0]) + 1):
+
+                        sub_str = value_list[idx][0][j:k]
+
+                        if k <= j + 3:
+                            atomic = ConstantString(value_list[idx][0])
+                            graph.edge_map[(i + j * 1.0 / len(value_list[idx][0]),)][
+                                (i + k * 1.0 / (len(value_list[idx][0])),)] = Edge(
+                                [EdgeValue(atomic, -1, values=[sub_str]),
+                                 EdgeValue(atomic, -1, values=[sub_str])])
+
+        graph.start_node = (0,)
+        graph.end_node = (n,)
         return graph
 
     @staticmethod

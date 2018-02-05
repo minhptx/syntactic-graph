@@ -18,7 +18,7 @@ class Operation(object):
         pass
 
     def transform(self):
-        return self.raw_ev.values
+        pass
 
 
 class Constant(Operation):
@@ -170,4 +170,4 @@ class Replace(Operation):
         return jaccard_similarity(self.raw_ev.values, self.transformed_ev.values)
 
     def transform(self):
-        return [x for x in self.raw_ev.values]
+        return self.raw_ev.values

@@ -23,7 +23,7 @@ class TransformationEvaluation:
         transformed_data_path = os.path.join(self.folder_path, "input", "transformed")
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
-        # for file_name in sorted(os.listdir(raw_data_path))[0:40]:
+        # for file_name in sorted(os.listdir(raw_data_path))[0:100]:
         for file_name in ["118.csv"]:
             print(file_name)
             #
@@ -37,11 +37,14 @@ class TransformationEvaluation:
             transformed_list = pd.read_csv(transformed_file_path, na_filter=False, dtype=str).iloc[:, 0].values.tolist()
             groundtruth_list = pd.read_csv(groundtruth_file_path, na_filter=False, dtype=str).iloc[:, 0].values.tolist()
 
+            # try:
             raw_model = HierarchicalModel(raw_list)
             raw_model.build_hierarchy()
 
             transformed_model = HierarchicalModel(transformed_list)
             transformed_model.build_hierarchy()
+            # except:
+            #     continue
 
             cost_map = defaultdict(lambda: defaultdict(lambda: float("inf")))
             result_map = defaultdict(lambda: defaultdict(lambda: None))
@@ -50,6 +53,7 @@ class TransformationEvaluation:
 
             for idx_1, raw_cluster in enumerate(raw_model.clusters):
                 for idx_2, transformed_cluster in enumerate(transformed_model.clusters):
+                    print("Length", len(raw_cluster.values), len(transformed_cluster.values))
                     transformation_model = TransformationModel(raw_cluster.pattern_graph,
                                                                transformed_cluster.pattern_graph)
 
@@ -59,15 +63,17 @@ class TransformationEvaluation:
                         idx_2] = cost - transformed_cluster.pattern_graph.num_edge() / raw_cluster.pattern_graph.num_edge()
                     result_map[idx_1][idx_2] = result
 
-                for idx_1 in result_map:
-                    idx_2 = min(cost_map[idx_1].items(), key=lambda x: x[1])[0]
-                    result = result_map[idx_1][idx_2]
-                    for values in result.values():
-                        value_str = "".join(values)
-                        print(value_str)
+            # print(result_map)
+            print(cost_map)
+            for idx_1 in result_map:
+                idx_2 = min(cost_map[idx_1].items(), key=lambda x: x[1])[0]
+                result = result_map[idx_1][idx_2]
+                for values in result.values():
+                    value_str = "".join(values)
+                    # print(value_str)
 
-                        if value_str in groundtruth_list:
-                            groundtruth_list = [x for x in groundtruth_list if x != value_str]
+                    if value_str in groundtruth_list:
+                        groundtruth_list = [x for x in groundtruth_list if x != value_str]
 
             wrong_size = len([x for x in groundtruth_list if x])
             accuracy = 1 - wrong_size * 1.0 / length
