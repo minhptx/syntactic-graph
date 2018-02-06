@@ -30,21 +30,30 @@ class TransformationModel:
         for i in range(1, len(path)):
             operation_path.append(best_operations[path[i - 1]][path[i]])
 
-        column_list = []
+        transformed_column_list = []
+        raw_column_list = []
 
         # print(operation_path)
         for operation in operation_path:
-            column_list.append(operation.transform())
+            raw_column_list.append(operation.raw_ev.values)
+            transformed_column_list.append(operation.transform())
 
-        value_list = defaultdict(lambda: [])
+        raw_value_list = defaultdict(lambda: [])
+        transformed_value_list = defaultdict(lambda: [])
 
-        for column in column_list:
+        for column in transformed_column_list:
             if not column:
                 continue
             for i in range(len(column)):
-                value_list[i].append(column[i])
+                transformed_value_list[i].append(column[i])
 
-        return value_list, cost
+        for column in raw_column_list:
+            if not column:
+                continue
+            for i in range(len(column)):
+                raw_value_list[i].append(column[i])
+
+        return raw_value_list, transformed_value_list, cost
 
     @staticmethod
     def dijkstra(sim_matrix, start_node, end_node):
@@ -92,7 +101,8 @@ class TransformationModel:
                             for ev_2 in edge_2.value_list:
                                 candidates = TransformationModel.get_all_candidates(ev_1, ev_2)
 
-                                # print("pair", start_node_2, end_node_2, ev_1.atomic.regex, ev_2.atomic.regex, candidates)
+                                # print("pair", start_node_2, end_node_2, ev_1.atomic.regex, ev_2.atomic.regex,
+                                # candidates)
 
                                 for candidate in candidates:
                                     score = candidate.score_function()

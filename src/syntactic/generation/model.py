@@ -28,10 +28,9 @@ class Cluster:
             min_sim_sample = min(cluster_value_list, key=lambda x: sim_map[seed][x])
         else:
             return Cluster([seed], seed_graph)
-        print(seed, min_sim_sample)
         min_sim_graph = Graph.generate(min_sim_sample)
         cluster_graph = seed_graph.intersect(min_sim_graph)
-        print(seed, min_sim_sample)
+        print(seed, min_sim_sample, cluster_value_list)
         for cluster_text in cluster_value_list:
             # print(cluster_text)
             if cluster_graph.is_matched(cluster_text, is_add=True):

@@ -185,13 +185,13 @@ class AlphabetWhitespace(Atomic):
         else:
             return False
 
+
 class Text(Atomic):
     def __init__(self):
         super(Text, self).__init__("Text", r"([\p{L}\p{P}]+|\p{Z}+|[\p{N}\p{P}]+)+", "txt")
 
     def is_subset(self, other_atomic):
         return False
-
 
 
 class ConstantString(Atomic):
@@ -226,7 +226,7 @@ TEXT = Text()
 ATOMIC_LIST = [PROPER_CASE, UPPER_CASE, LOWER_CASE, DIGIT, ALPHABET, ALPHANUM, WHITESPACE, PROPER_CASE_WS,
                LOWER_CASE_WS, UPPER_CASE_WS, ALPHABET_WS, PUNCTUATION, ALPHA_PUNC, TEXT]
 
-TOKEN_TYPES = [ALPHABET, WHITESPACE, PUNCTUATION, DIGIT]
+TOKEN_TYPES = [UPPER_CASE, LOWER_CASE, ALPHABET, WHITESPACE, PUNCTUATION, DIGIT]
 
 if __name__ == "__main__":
     a = ConstantString("33")

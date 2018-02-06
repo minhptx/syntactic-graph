@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from syntactic.generation.atomic import *
-from utils.string import jaccard_similarity, jaccard_subset_similarity
+from utils.string import jaccard_similarity, jaccard_subset_similarity, soft_tfidf_similarity
 
 
 class Operation(object):
@@ -54,7 +54,7 @@ class PartOf(Operation):
             return True
 
     def score_function(self):
-        return jaccard_subset_similarity(self.raw_ev.values, self.transformed_ev.values)
+        return soft_tfidf_similarity(self.raw_ev.values, self.transformed_ev.values)
 
     def transform(self):
         return self.raw_ev.values
@@ -72,8 +72,8 @@ class Upper(Operation):
         return False
 
     def score_function(self):
-        value_list = [x.uppercase() for x in self.raw_ev.values]
-        return jaccard_similarity(value_list, self.transformed_ev.values())
+        value_list = [x.upper() for x in self.raw_ev.values]
+        return soft_tfidf_similarity(value_list, self.transformed_ev.values)
 
     def transform(self):
         return [x.toupper() for x in self.raw_ev.values]
@@ -92,7 +92,7 @@ class Lower(Operation):
 
     def score_function(self):
         value_list = [x.lower() for x in self.raw_ev.values]
-        return jaccard_similarity(value_list, self.transformed_ev.values)
+        return soft_tfidf_similarity(value_list, self.transformed_ev.values)
 
     def transform(self):
         return [x.lower() for x in self.raw_ev.values]

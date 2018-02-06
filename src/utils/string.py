@@ -1,6 +1,7 @@
 from collections import Counter
 
 import jellyfish
+from py_stringmatching import SoftTfIdf
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import math
@@ -88,3 +89,8 @@ def list_tfidf_cosine_similarity(list_1, list_2, tfidf_vectorizer):
 def list_soft_jaccard_similarity(list_1, list_2):
     intersection_length = sum(sum(jellyfish.jaro_winkler(i, j) for j in list_2) / float(len(list_2)) for i in list_1)
     return float(intersection_length) / (len(list_1) + len(list_2) - intersection_length)
+
+
+def soft_tfidf_similarity(list_1, list_2):
+    soft_tfidf = SoftTfIdf([list_1, list_2])
+    return (soft_tfidf.get_raw_score(list_1, list_2))

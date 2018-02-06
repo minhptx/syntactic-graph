@@ -22,8 +22,8 @@ class MappingEvaluation:
         transformed_data_path = os.path.join(self.folder_path, "input", "transformed")
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
-        for file_name in sorted(os.listdir(raw_data_path))[0:100]:
-        # for file_name in ["10.csv"]:
+        # for file_name in sorted(os.listdir(raw_data_path))[0:100]:
+        for file_name in ["name3.csv"]:
             print(file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
@@ -51,15 +51,17 @@ class MappingEvaluation:
             true_count = 0
             count = 0
 
+            print(raw_final_list)
             for new_idx, value in enumerate(raw_final_list):
                 old_idx = raw_list.index(value)
-                print(value, raw_list[new_idx], transformed_final_list[new_idx], groundtruth_list[old_idx], )
+                print(value, raw_list[old_idx], transformed_final_list[new_idx], groundtruth_list[old_idx], )
                 if groundtruth_list[old_idx] == transformed_final_list[new_idx]:
                     true_count += 1
                 count += 1
 
             if count:
                 accuracy_list.append(true_count * 1.0 / count)
+                print(true_count * 1.0 / count)
         return accuracy_list
 
 if __name__ == "__main__":

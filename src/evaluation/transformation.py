@@ -24,8 +24,8 @@ class TransformationEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
         # for file_name in sorted(os.listdir(raw_data_path))[0:100]:
-        for file_name in ["118.csv"]:
-            print(file_name)
+        for file_name in ["name3.csv"]:
+            print("File", file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
             #     continue
@@ -33,12 +33,12 @@ class TransformationEvaluation:
             transformed_file_path = os.path.join(transformed_data_path, file_name)
             groundtruth_file_path = os.path.join(groundtruth_data_path, file_name)
 
-            raw_list = pd.read_csv(raw_file_path, na_filter=False, dtype=str).iloc[:, 0].values.tolist()
+            raw_input_list = pd.read_csv(raw_file_path, na_filter=False, dtype=str).iloc[:, 0].values.tolist()
             transformed_list = pd.read_csv(transformed_file_path, na_filter=False, dtype=str).iloc[:, 0].values.tolist()
             groundtruth_list = pd.read_csv(groundtruth_file_path, na_filter=False, dtype=str).iloc[:, 0].values.tolist()
 
             # try:
-            raw_model = HierarchicalModel(raw_list)
+            raw_model = HierarchicalModel(raw_input_list)
             raw_model.build_hierarchy()
 
             transformed_model = HierarchicalModel(transformed_list)
@@ -48,8 +48,10 @@ class TransformationEvaluation:
 
             cost_map = defaultdict(lambda: defaultdict(lambda: float("inf")))
             result_map = defaultdict(lambda: defaultdict(lambda: None))
+            raw_map = defaultdict(lambda: defaultdict(lambda: None))
 
-            length = len(groundtruth_list)
+            count = len(groundtruth_list)
+            true_count = 0
 
             for idx_1, raw_cluster in enumerate(raw_model.clusters):
                 for idx_2, transformed_cluster in enumerate(transformed_model.clusters):
@@ -57,27 +59,32 @@ class TransformationEvaluation:
                     transformation_model = TransformationModel(raw_cluster.pattern_graph,
                                                                transformed_cluster.pattern_graph)
 
-                    result, cost = transformation_model.generate_program()
+                    input_list, result_list, cost = transformation_model.generate_program()
 
                     cost_map[idx_1][
-                        idx_2] = cost - transformed_cluster.pattern_graph.num_edge() / raw_cluster.pattern_graph.num_edge()
-                    result_map[idx_1][idx_2] = result
+                        idx_2] = cost - transformed_cluster.pattern_graph.num_edge() / \
+                                 raw_cluster.pattern_graph.num_edge()
+                    result_map[idx_1][idx_2] = result_list
+                    raw_map[idx_1][idx_2] = input_list
 
-            # print(result_map)
-            print(cost_map)
             for idx_1 in result_map:
                 idx_2 = min(cost_map[idx_1].items(), key=lambda x: x[1])[0]
-                result = result_map[idx_1][idx_2]
-                for values in result.values():
+                result_list = result_map[idx_1][idx_2]
+                raw_list = raw_map[idx_1][idx_2]
+                for idx, values in result_list.items():
                     value_str = "".join(values)
-                    # print(value_str)
+                    raw_str = "".join(raw_list[idx])
 
-                    if value_str in groundtruth_list:
-                        groundtruth_list = [x for x in groundtruth_list if x != value_str]
+                    print(value_str, raw_str)
+                    raw_idx = raw_input_list.index(raw_str)
+                    groundtruth = groundtruth_list[raw_idx]
 
-            wrong_size = len([x for x in groundtruth_list if x])
-            accuracy = 1 - wrong_size * 1.0 / length
-            print([x for x in groundtruth_list if x])
+                    if value_str == groundtruth:
+                        true_count += 1
+                    else:
+                        print(value_str, groundtruth)
+
+            accuracy = true_count * 1.0 / count
 
             accuracy_list.append(accuracy)
             print(accuracy)

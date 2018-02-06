@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import regex as re
 
-from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString
+from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString, TOKEN_TYPES
 from utils.string import lcs
 
 
@@ -18,7 +18,8 @@ class EdgeValue:
             self.values = []
 
     def __eq__(self, ev):
-        return self.atomic == ev.atomic and self.nth == ev.nth and self.length == ev.length and self.neighbor == ev.neighbor
+        return self.atomic == ev.atomic and self.nth == ev.nth and self.length == ev.length and self.neighbor == \
+               ev.neighbor
 
     def is_subset(self, ev):
         if self.atomic.is_subset(ev.atomic) or self.atomic == ev.atomic:
@@ -181,8 +182,6 @@ class Graph:
                             edge_value.values.append(match.group())
         return False
 
-
-
     @staticmethod
     def atomic_profile(input_str):
         atomic_pos_dict = defaultdict(lambda: [])
@@ -195,56 +194,56 @@ class Graph:
         return atomic_pos_dict
 
     @staticmethod
+    def token_type_segment(input_str):
+        token_type_dict = defaultdict(lambda: [])
+
+        for token_type in TOKEN_TYPES:
+            matches = re.finditer(token_type.regex, input_str)
+            for match in matches:
+                token_type_dict[token_type.name].append((match.start(), match.end()))
+
+        return token_type_dict
+
+    @staticmethod
     def generate(input_str):
         input_str = "^" + input_str + "$"
         n = len(input_str)
         graph = Graph([input_str])
 
         atomic_pos_dict = Graph.atomic_profile(input_str)
+        token_type_dict = Graph.token_type_segment(input_str)
 
         graph.edge_map[(0,)][(1,)] = Edge([EdgeValue(START_TOKEN, 1)])
         graph.edge_map[(n - 1,)][(n,)] = Edge([EdgeValue(END_TOKEN, 1)])
 
-        for i in range(1, n - 1):
-
-            for j in range(i + 1, n):
-
+        for atomic in ATOMIC_LIST:
+            for i, j in atomic_pos_dict[atomic.name]:
                 sub_str = input_str[i:j]
+                if i == 0 or j == n:
+                    continue
+                left_index = atomic_pos_dict[atomic.name].index((i, j))
+                right_index = len(atomic_pos_dict[atomic.name]) - left_index
+                graph.edge_map[(i,)][(j,)].add_edge_value(
+                    EdgeValue(atomic, left_index + 1, values=[sub_str]))  # variable-length
+                graph.edge_map[(i,)][(j,)].add_edge_value(
+                    EdgeValue(atomic, -right_index, values=[sub_str]))  # variable-length
+                graph.edge_map[(i,)][(j,)].add_edge_value(
+                    EdgeValue(atomic, left_index + 1, j - i, values=[sub_str]))  # fixed-length
+                graph.edge_map[(i,)][(j,)].add_edge_value(
+                    EdgeValue(atomic, -right_index, j - i, values=[sub_str]))  # fixed-length
 
-                if j <= i + 3:
-                    atomic = ConstantString(sub_str)
-                    left_nth, right_nth = Graph.get_nth_edge_values(atomic, input_str, i, j)
-                    graph.edge_map[(i,)][(j,)] = Edge(
-                        [EdgeValue(atomic, left_nth, values=[sub_str]), EdgeValue(atomic, right_nth, values=[sub_str])])
+            for atomic in TOKEN_TYPES:
+                for i, j in token_type_dict[atomic.name]:
+                    sub_str = input_str[i:j]
+                    if i == 0 or j == n:
+                        continue
+                    left_index = atomic_pos_dict[atomic.name].index((i, j))
+                    right_index = len(atomic_pos_dict[atomic.name]) - left_index
+                    graph.edge_map[(i,)][(j,)].add_edge_value(
+                        EdgeValue(ConstantString(sub_str), left_index + 1, values=[sub_str]))  # variable-length
+                    graph.edge_map[(i,)][(j,)].add_edge_value(
+                        EdgeValue(ConstantString(sub_str), -right_index, values=[sub_str]))  # variable-length
 
-                for atomic in ATOMIC_LIST:
-                    if (i, j) in atomic_pos_dict[atomic.name]:
-                        left_index = atomic_pos_dict[atomic.name].index((i, j))
-                        right_index = len(atomic_pos_dict[atomic.name]) - left_index
-
-                        # graph.edge_map[(1,)][(i,)].add_edge_value(
-                        #     EdgeValue(ANY, 1, neighbor=atomic, values=[input_str[1:i]]))
-                        # graph.edge_map[(j,)][(n - 1,)].add_edge_value(
-                        #     EdgeValue(ANY, -1, neighbor=atomic, values=[input_str[j:n - 1]]))
-
-                        graph.edge_map[(i,)][(j,)].add_edge_value(
-                            EdgeValue(atomic, left_index + 1, values=[sub_str]))  # variable-length
-                        graph.edge_map[(i,)][(j,)].add_edge_value(
-                            EdgeValue(atomic, -right_index, values=[sub_str]))  # variable-length
-                        graph.edge_map[(i,)][(j,)].add_edge_value(
-                            EdgeValue(atomic, left_index + 1, j - i, values=[sub_str]))  # fixed-length
-                        graph.edge_map[(i,)][(j,)].add_edge_value(
-                            EdgeValue(atomic, -right_index, j - i, values=[sub_str]))  # fixed-length
-                # for atomic in ATOMIC_LIST:
-                #     left_nth, right_nth = Graph.get_nth_edge_values(atomic, input_str, i, j)
-                #     graph.edge_map[(i,)][(j,)].add_edge_value(
-                #         EdgeValue(atomic, left_nth + 1, values=[sub_str]))  # variable-length
-                #     graph.edge_map[(i,)][(j,)].add_edge_value(
-                #         EdgeValue(atomic, right_nth, values=[sub_str]))  # variable-length
-                #     graph.edge_map[(i,)][(j,)].add_edge_value(
-                #         EdgeValue(atomic, left_nth + 1, j - i, values=[sub_str]))  # fixed-length
-                #     graph.edge_map[(i,)][(j,)].add_edge_value(
-                #         EdgeValue(atomic, right_nth, j - i, values=[sub_str]))  # fixed-length
         graph.start_node = (0,)
         graph.end_node = (n,)
 
