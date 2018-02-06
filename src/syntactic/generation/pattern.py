@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import regex as re
 
-from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString, TOKEN_TYPES
+from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString, TOKEN_TYPES, TEXT
 from utils.string import lcs
 
 
@@ -31,6 +31,7 @@ class EdgeValue:
     def join(self, ev):
         if self == ev:
             return EdgeValue(self.atomic, self.nth, self.length, self.neighbor, values=self.values + ev.values)
+        return None
 
 
 class Edge:
@@ -159,27 +160,37 @@ class Graph:
             return None
         return graph
 
-    def is_matched(self, input_str, is_add=False):
+    def is_matched(self, input_str, is_add=True):
 
         stack = [(self.start_node, input_str)]
+        visited = []
 
+        is_passable = False
         while stack:
             current_node, current_str = stack.pop(0)
             # print(current_node, current_str)
+
+            if current_node in visited:
+                continue
+
+            visited.append(current_node)
 
             for end_node in self.edge_map[current_node]:
                 edge = self.edge_map[current_node][end_node]
 
                 for edge_value in edge.value_list:
                     if edge_value.atomic == END_TOKEN:
-                        return True
+                        is_passable = True
 
                     match = re.match(edge_value.atomic.regex, current_str)
+                    # print(len(edge_value.values), edge_value.atomic.regex, current_str, match)
                     if match and match.start() == 0:
                         if (end_node, current_str[len(match.group()):]) not in stack:
                             stack.append((end_node, current_str[len(match.group()):]))
                         if is_add:
                             edge_value.values.append(match.group())
+        if is_passable:
+            return True
         return False
 
     @staticmethod
@@ -232,17 +243,28 @@ class Graph:
                 graph.edge_map[(i,)][(j,)].add_edge_value(
                     EdgeValue(atomic, -right_index, j - i, values=[sub_str]))  # fixed-length
 
+                # graph.edge_map[(j,)][(n - 1,)].add_edge_value(
+                #     EdgeValue(TEXT, -1, neighbor=atomic, values=[sub_str]))  # fixed-length
+                # graph.edge_map[(1,)][(i,)].add_edge_value(
+                #     EdgeValue(TEXT, 1, neighbor=atomic, values=[sub_str]))  # fixed-length
+
             for atomic in TOKEN_TYPES:
                 for i, j in token_type_dict[atomic.name]:
                     sub_str = input_str[i:j]
                     if i == 0 or j == n:
                         continue
-                    left_index = atomic_pos_dict[atomic.name].index((i, j))
-                    right_index = len(atomic_pos_dict[atomic.name]) - left_index
+                    left_index = token_type_dict[atomic.name].index((i, j))
+                    right_index = len(token_type_dict[atomic.name]) - left_index
+                    constant = ConstantString(sub_str)
                     graph.edge_map[(i,)][(j,)].add_edge_value(
-                        EdgeValue(ConstantString(sub_str), left_index + 1, values=[sub_str]))  # variable-length
+                        EdgeValue(constant, left_index + 1, values=[sub_str]))  # variable-length
                     graph.edge_map[(i,)][(j,)].add_edge_value(
-                        EdgeValue(ConstantString(sub_str), -right_index, values=[sub_str]))  # variable-length
+                        EdgeValue(constant, -right_index, values=[sub_str]))  # variable-length
+
+                    # graph.edge_map[(j,)][(n - 1,)].add_edge_value(
+                    #     EdgeValue(TEXT, -1, neighbor=constant, values=[sub_str]))  # fixed-length
+                    # graph.edge_map[(1,)][(i,)].add_edge_value(
+                    #     EdgeValue(TEXT, 1, neighbor=constant, values=[sub_str]))  # fixed-length
 
         graph.start_node = (0,)
         graph.end_node = (n,)

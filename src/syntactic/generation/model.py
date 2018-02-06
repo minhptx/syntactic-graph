@@ -18,7 +18,7 @@ class Cluster:
 
     def add_value(self, text):
         self.values.append(text)
-        self.pattern_graph.values.append(text)
+        self.pattern_graph.values.append("^" + text + "$")
 
     @staticmethod
     def generate(seed, cluster_value_list, sim_map):
@@ -30,11 +30,11 @@ class Cluster:
             return Cluster([seed], seed_graph)
         min_sim_graph = Graph.generate(min_sim_sample)
         cluster_graph = seed_graph.intersect(min_sim_graph)
-        print(seed, min_sim_sample, cluster_value_list)
+
         for cluster_text in cluster_value_list:
             # print(cluster_text)
             if cluster_graph.is_matched(cluster_text, is_add=True):
-                cluster_graph.values.append(cluster_text)
+                cluster_graph.values.append("^" + cluster_text + "$")
                 continue
             else:
                 graph = Graph.generate(cluster_text)

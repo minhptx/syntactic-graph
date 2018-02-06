@@ -23,8 +23,8 @@ class TransformationEvaluation:
         transformed_data_path = os.path.join(self.folder_path, "input", "transformed")
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
-        # for file_name in sorted(os.listdir(raw_data_path))[0:100]:
-        for file_name in ["name3.csv"]:
+        for file_name in sorted(os.listdir(raw_data_path))[0:100]:
+        # for file_name in ["10.csv"]:
             print("File", file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
@@ -48,7 +48,6 @@ class TransformationEvaluation:
 
             cost_map = defaultdict(lambda: defaultdict(lambda: float("inf")))
             result_map = defaultdict(lambda: defaultdict(lambda: None))
-            raw_map = defaultdict(lambda: defaultdict(lambda: None))
 
             count = len(groundtruth_list)
             true_count = 0
@@ -59,24 +58,22 @@ class TransformationEvaluation:
                     transformation_model = TransformationModel(raw_cluster.pattern_graph,
                                                                transformed_cluster.pattern_graph)
 
-                    input_list, result_list, cost = transformation_model.generate_program()
+                    result_list, cost = transformation_model.generate_program()
 
                     cost_map[idx_1][
                         idx_2] = cost - transformed_cluster.pattern_graph.num_edge() / \
                                  raw_cluster.pattern_graph.num_edge()
                     result_map[idx_1][idx_2] = result_list
-                    raw_map[idx_1][idx_2] = input_list
 
             for idx_1 in result_map:
                 idx_2 = min(cost_map[idx_1].items(), key=lambda x: x[1])[0]
                 result_list = result_map[idx_1][idx_2]
-                raw_list = raw_map[idx_1][idx_2]
                 for idx, values in result_list.items():
                     value_str = "".join(values)
-                    raw_str = "".join(raw_list[idx])
+                    raw_str = raw_model.clusters[idx_1].pattern_graph.values[idx]
 
-                    print(value_str, raw_str)
-                    raw_idx = raw_input_list.index(raw_str)
+                    print("Value and raw", value_str, "-----", raw_str)
+                    raw_idx = raw_input_list.index(raw_str[1:-1])
                     groundtruth = groundtruth_list[raw_idx]
 
                     if value_str == groundtruth:

@@ -15,30 +15,28 @@ class TransformationModel:
 
         candidate_map = TransformationModel.generate(self.raw_graph, self.transformed_graph)
 
+        print("Candidate")
+
         for start_node, end_node in candidate_map:
             best_operation = max(candidate_map[(start_node, end_node)], key=lambda x: x[0])
             best_operations[start_node][end_node] = best_operation[1]
-            sim_map[start_node][end_node] = 1 - best_operation[0]
+            sim_map[start_node][end_node] = best_operation[0]
 
-        # print("Mapping", best_operations)
         path, cost = TransformationModel.dijkstra(sim_map, self.transformed_graph.start_node,
                                                   self.transformed_graph.end_node)
-        # print("graph", self.raw_graph.values, self.transformed_graph.values)
-        # print(cost)
 
         operation_path = []
         for i in range(1, len(path)):
             operation_path.append(best_operations[path[i - 1]][path[i]])
 
         transformed_column_list = []
-        raw_column_list = []
 
-        # print(operation_path)
+        print("Best Transformation")
         for operation in operation_path:
-            raw_column_list.append(operation.raw_ev.values)
+            print(operation.raw_ev.values[:3], operation.transformed_ev.values[:3], operation,
+                  operation.score_function())
             transformed_column_list.append(operation.transform())
 
-        raw_value_list = defaultdict(lambda: [])
         transformed_value_list = defaultdict(lambda: [])
 
         for column in transformed_column_list:
@@ -47,45 +45,57 @@ class TransformationModel:
             for i in range(len(column)):
                 transformed_value_list[i].append(column[i])
 
-        for column in raw_column_list:
-            if not column:
-                continue
-            for i in range(len(column)):
-                raw_value_list[i].append(column[i])
+        return transformed_value_list, cost
 
-        return raw_value_list, transformed_value_list, cost
+    @staticmethod
+    def topo_sort(start_node, sim_matrix):
+        visited = []
+        topo_list = []
+        TransformationModel.visit(start_node, visited, topo_list, sim_matrix)
+        return topo_list
+
+    @staticmethod
+    def visit(n, visited, topo_list, sim_matrix):
+        print(n)
+        if n in visited:
+            return
+
+        for next_node in sim_matrix[n]:
+            TransformationModel.visit(next_node, visited, topo_list, sim_matrix)
+
+        visited.append(n)
+        topo_list.insert(0, n)
 
     @staticmethod
     def dijkstra(sim_matrix, start_node, end_node):
-        vertex_set = list(sim_matrix.keys())
-        distance_map = defaultdict(lambda: float("inf"))
+        print("Viterbi")
+        distance_map = defaultdict(lambda: float("-inf"))
         previous_map = defaultdict(lambda: None)
 
-        distance_map[start_node] = 1
+        distance_map[start_node] = 0
 
-        while vertex_set:
+        topo_list = TransformationModel.topo_sort(start_node, sim_matrix)
 
-            u = min(vertex_set, key=lambda x: distance_map[x])
+        while topo_list:
+            current_node = topo_list.pop(0)
 
-            vertex_set.remove(u)
+            for next_node in sim_matrix[current_node]:
+                if distance_map[next_node] < distance_map[current_node] + sim_matrix[current_node][next_node]:
+                    distance_map[next_node] = distance_map[current_node] + sim_matrix[current_node][next_node]
+                    previous_map[next_node] = current_node
 
-            for v in sim_matrix[u]:
-                distance = distance_map[u] + sim_matrix[u][v]
+            print("Topo", current_node)
 
-                if distance < distance_map[v]:
-                    distance_map[v] = distance
-                    previous_map[v] = u
+        print("End")
+        current_node = end_node
 
-        S = []
-        # print("Previous", distance_map)
+        path = [end_node]
 
-        u = end_node
-        while previous_map[u]:
-            S.insert(0, u)
-            u = previous_map[u]
+        while current_node != start_node:
+            path.insert(0, previous_map[current_node])
+            current_node = previous_map[current_node]
 
-        S.insert(0, u)
-        return S, distance_map[end_node]
+        return path, distance_map[end_node]
 
     @staticmethod
     def generate(raw_graph, transformed_graph):
@@ -105,7 +115,9 @@ class TransformationModel:
                                 # candidates)
 
                                 for candidate in candidates:
+                                    print(ev_1.values[:3], ev_2.values[:3], candidate)
                                     score = candidate.score_function()
+                                    print(ev_1.values[:3], ev_2.values[:3], candidate, score)
                                     candidate_map[(start_node_2, end_node_2)].append((score, candidate))
 
         return candidate_map
