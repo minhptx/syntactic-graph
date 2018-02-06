@@ -1,3 +1,4 @@
+import codecs
 import os
 from collections import defaultdict
 
@@ -23,8 +24,8 @@ class TransformationEvaluation:
         transformed_data_path = os.path.join(self.folder_path, "input", "transformed")
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
-        for file_name in sorted(os.listdir(raw_data_path))[0:100]:
-        # for file_name in ["10.csv"]:
+        for file_name in sorted(os.listdir(raw_data_path))[:2]:
+        # for file_name in ["1st_dimension.csv"]:
             print("File", file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
@@ -33,9 +34,13 @@ class TransformationEvaluation:
             transformed_file_path = os.path.join(transformed_data_path, file_name)
             groundtruth_file_path = os.path.join(groundtruth_data_path, file_name)
 
-            raw_input_list = pd.read_csv(raw_file_path, na_filter=False, dtype=str).iloc[:, 0].values.tolist()
-            transformed_list = pd.read_csv(transformed_file_path, na_filter=False, dtype=str).iloc[:, 0].values.tolist()
-            groundtruth_list = pd.read_csv(groundtruth_file_path, na_filter=False, dtype=str).iloc[:, 0].values.tolist()
+            raw_input_list = pd.read_csv(raw_file_path, dtype=object).iloc[:, 0].fillna("").values.tolist()
+            transformed_list = pd.read_csv(transformed_file_path, dtype=object).iloc[:, 0].fillna("").values.tolist()
+
+            with codecs.open(groundtruth_file_path, encoding="utf-8") as reader:
+                groundtruth_list = list(reader.readlines())
+                if groundtruth_list[0][0] == '"':
+                    groundtruth_list = [x.strip()[1:-1] for x in groundtruth_list]
 
             # try:
             raw_model = HierarchicalModel(raw_input_list)
@@ -72,11 +77,11 @@ class TransformationEvaluation:
                     value_str = "".join(values)
                     raw_str = raw_model.clusters[idx_1].pattern_graph.values[idx]
 
-                    print("Value and raw", value_str, "-----", raw_str)
                     raw_idx = raw_input_list.index(raw_str[1:-1])
+                    print(value_str, raw_str, groundtruth_list[raw_idx])
                     groundtruth = groundtruth_list[raw_idx]
 
-                    if value_str == groundtruth:
+                    if value_str.strip() == groundtruth.strip():
                         true_count += 1
                     else:
                         print(value_str, groundtruth)

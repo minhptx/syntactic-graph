@@ -66,7 +66,9 @@ class Upper(Operation):
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
-        if transformed_ev.atomic == UPPER_CASE and raw_ev.atomic in [LOWER_CASE, ALPHABET, PROPER_CASE]:
+        if transformed_ev.atomic in [UPPER_CASE, UPPER_CASE_WS] and raw_ev.atomic in [LOWER_CASE, ALPHABET, PROPER_CASE,
+                                                                                      LOWER_CASE_WS, ALPHABET_WS,
+                                                                                      PROPER_CASE_WS]:
             if transformed_ev.length == raw_ev.length:
                 return True
         return False
@@ -85,7 +87,9 @@ class Lower(Operation):
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
-        if transformed_ev.atomic == LOWER_CASE and raw_ev.atomic in [UPPER_CASE, ALPHABET, PROPER_CASE]:
+        if transformed_ev.atomic in [LOWER_CASE, LOWER_CASE_WS] and raw_ev.atomic in [UPPER_CASE, ALPHABET, PROPER_CASE,
+                                                                                      UPPER_CASE_WS, ALPHABET_WS,
+                                                                                      PROPER_CASE_WS]:
             if transformed_ev.length == raw_ev.length:
                 return True
         return False

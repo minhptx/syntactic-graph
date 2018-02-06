@@ -2,8 +2,10 @@ import math
 from collections import Counter
 
 import numpy as np
-from py_stringmatching import SoftTfIdf, Jaro
+from py_stringmatching import SoftTfIdf, Jaro, Levenshtein
 from sklearn.metrics.pairwise import cosine_similarity
+
+from utils import nlp
 
 
 def lcs(a, b):
@@ -86,5 +88,6 @@ def list_tfidf_cosine_similarity(list_1, list_2, tfidf_vectorizer):
 
 
 def list_soft_jaccard_similarity(list_1, list_2):
-    soft_tfidf = SoftTfIdf([list_1, list_2], sim_func=Jaro().get_raw_score, threshold=0.7)
+    # soft_tfidf = SoftTfIdf([list_1, list_2], lambda x, y: nlp(x).similarity(nlp(y)), threshold=0.5)
+    soft_tfidf = SoftTfIdf([list_1, list_2], sim_func=Levenshtein().get_sim_score, threshold=0.5)
     return (soft_tfidf.get_raw_score(list_1, list_2))
