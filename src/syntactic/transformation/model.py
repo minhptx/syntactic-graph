@@ -15,8 +15,6 @@ class TransformationModel:
 
         candidate_map = TransformationModel.generate(self.raw_graph, self.transformed_graph)
 
-        print("Candidate")
-
         for start_node, end_node in candidate_map:
             best_operation = max(candidate_map[(start_node, end_node)], key=lambda x: x[0])
             best_operations[start_node][end_node] = best_operation[1]
@@ -56,7 +54,6 @@ class TransformationModel:
 
     @staticmethod
     def visit(n, visited, topo_list, sim_matrix):
-        print(n)
         if n in visited:
             return
 
@@ -68,7 +65,6 @@ class TransformationModel:
 
     @staticmethod
     def dijkstra(sim_matrix, start_node, end_node):
-        print("Viterbi")
         distance_map = defaultdict(lambda: float("-inf"))
         previous_map = defaultdict(lambda: None)
 
@@ -115,7 +111,6 @@ class TransformationModel:
                                 # candidates)
 
                                 for candidate in candidates:
-                                    print(ev_1.values[:3], ev_2.values[:3], candidate)
                                     score = candidate.score_function()
                                     print(ev_1.values[:3], ev_2.values[:3], candidate, score)
                                     candidate_map[(start_node_2, end_node_2)].append((score, candidate))

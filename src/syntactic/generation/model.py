@@ -122,7 +122,7 @@ class HierarchicalModel:
 
         seed_set = [sorted(text_list, key=lambda x: len(x))[0]]
 
-        while min_sim < 0.1 or abs(min_sim_list[-2] - min_sim_list[-1]) > 0.2:
+        while min_sim < 0.1 or abs(min_sim_list[-2] - min_sim_list[-1]) > 0.1:
             # print(text_list)
             new_seed, min_sim = self.min_sim_sample(text_list, seed_set)
             min_sim_list.append(min_sim)
