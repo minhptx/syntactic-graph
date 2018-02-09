@@ -3,6 +3,7 @@ from collections import defaultdict
 
 import pandas as pd
 
+from sequence.model import ClassificationModel
 from syntactic.generation.model import HierarchicalModel
 from syntactic.mapping.model import MappingModel
 
@@ -23,7 +24,7 @@ class MappingEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
         # for file_name in sorted(os.listdir(raw_data_path))[0:100]:
-        for file_name in ["name1.csv"]:
+        for file_name in ["0.csv"]:
             print(file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
@@ -44,24 +45,16 @@ class MappingEvaluation:
             transformed_model.build_hierarchy()
             # except:
 
-            mapping_model = MappingModel(raw_model, transformed_model)
+            for cluster_1 in raw_model.clusters:
+                for cluster_2 in transformed_model.clusters:
+                    graph_1 = cluster_1.pattern_graph
+                    graph_2 = cluster_2.pattern_graph
 
-            raw_final_list, transformed_final_list = mapping_model.map()
+                    model = ClassificationModel(graph_1)
+                    model.train()
+                    model.predict(graph_2)
 
-            true_count = 0
-            count = 0
 
-            print(raw_final_list)
-            for new_idx, value in enumerate(raw_final_list):
-                old_idx = raw_list.index(value)
-                print(value, raw_list[old_idx], transformed_final_list[new_idx], groundtruth_list[old_idx], )
-                if groundtruth_list[old_idx] == transformed_final_list[new_idx]:
-                    true_count += 1
-                count += 1
-
-            if count:
-                accuracy_list.append(true_count * 1.0 / count)
-                print(true_count * 1.0 / count)
         return accuracy_list
 
 if __name__ == "__main__":
