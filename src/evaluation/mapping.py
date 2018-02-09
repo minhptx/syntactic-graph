@@ -23,7 +23,7 @@ class MappingEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
         # for file_name in sorted(os.listdir(raw_data_path))[0:100]:
-        for file_name in ["name3.csv"]:
+        for file_name in ["name1.csv"]:
             print(file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
