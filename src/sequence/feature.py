@@ -8,4 +8,5 @@ def token_to_features(pattern_token, pre_token, post_token):
 
     for text in pattern_token.values:
         feature_dict["Word=%s" % text] = True
+    print(feature_dict)
     return feature_dict

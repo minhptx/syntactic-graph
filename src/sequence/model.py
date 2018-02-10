@@ -16,6 +16,7 @@ class ClassificationModel:
     def generate_features(self):
         for node_1 in self.pattern_graph.edge_map:
             for node_2 in self.pattern_graph.edge_map[node_1]:
+                print(node_1, node_2)
                 self.feature_node_dict[(node_1, node_2)].append(token_to_features(
                     self.pattern_graph.edge_map[node_1][node_2], None, None))
 
@@ -29,10 +30,11 @@ class ClassificationModel:
                 train_labels.append("|".join(label))
 
         self.vectorizer = DictVectorizer()
-        train_vectors = self.vectorizer.fit_transform(self.vectorizer)
+        print(train_data)
+        train_vectors = self.vectorizer.fit_transform(train_data)
 
         self.classifier = RandomForestClassifier()
-        self.classifier.fit(train_data, train_labels)
+        self.classifier.fit(train_vectors, train_labels)
 
         return self.vectorizer, self.classifier
 
