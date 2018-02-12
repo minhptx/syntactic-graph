@@ -14,7 +14,7 @@ class TransformationEvaluation:
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
         self.transformed_data_dict = defaultdict(lambda: [])
-        self.folder_path = "data/transformation"
+        self.folder_path = "data/noisy"
         self.name_list = []
 
     def read_data(self):
@@ -24,8 +24,8 @@ class TransformationEvaluation:
         transformed_data_path = os.path.join(self.folder_path, "input", "transformed")
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
-        for file_name in sorted(os.listdir(raw_data_path))[:2]:
-        # for file_name in ["1st_dimension.csv"]:
+        for file_name in sorted(os.listdir(raw_data_path))[1:2]:
+        # for file_name in ["bd1.csv"]:
             print("File", file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
@@ -34,8 +34,8 @@ class TransformationEvaluation:
             transformed_file_path = os.path.join(transformed_data_path, file_name)
             groundtruth_file_path = os.path.join(groundtruth_data_path, file_name)
 
-            raw_input_list = pd.read_csv(raw_file_path, dtype=object).iloc[:, 0].fillna("").values.tolist()
-            transformed_list = pd.read_csv(transformed_file_path, dtype=object).iloc[:, 0].fillna("").values.tolist()
+            raw_input_list = pd.read_csv(raw_file_path, dtype=object, header=None).iloc[:, 0].fillna("").values.tolist()
+            transformed_list = pd.read_csv(transformed_file_path, dtype=object, header=None).iloc[:, 0].fillna("").values.tolist()
 
             with codecs.open(groundtruth_file_path, encoding="utf-8") as reader:
                 groundtruth_list = list(reader.readlines())
@@ -75,16 +75,17 @@ class TransformationEvaluation:
                 result_list = result_map[idx_1][idx_2]
                 for idx, values in result_list.items():
                     value_str = "".join(values)
+                    print(len(raw_model.clusters[idx_1].pattern_graph.values), len(result_list))
                     raw_str = raw_model.clusters[idx_1].pattern_graph.values[idx]
 
                     raw_idx = raw_input_list.index(raw_str[1:-1])
-                    print(value_str, raw_str, groundtruth_list[raw_idx])
+                    print(value_str, raw_str, groundtruth_list[raw_idx].strip())
                     groundtruth = groundtruth_list[raw_idx]
 
                     if value_str.strip() == groundtruth.strip():
                         true_count += 1
                     else:
-                        print(value_str, groundtruth)
+                        print("False", value_str, groundtruth)
 
             accuracy = true_count * 1.0 / count
 

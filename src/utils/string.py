@@ -3,6 +3,7 @@ from collections import Counter
 
 import numpy as np
 from py_stringmatching import SoftTfIdf, Jaro, Levenshtein
+from scipy.stats import ks_2samp
 from sklearn.metrics.pairwise import cosine_similarity
 
 from utils import nlp
@@ -87,7 +88,23 @@ def list_tfidf_cosine_similarity(list_1, list_2, tfidf_vectorizer):
     return np.abs(cosine_similarity(tfidf_list_1, tfidf_list_2))[0][0]
 
 
-def list_soft_jaccard_similarity(list_1, list_2):
-    # soft_tfidf = SoftTfIdf([list_1, list_2], lambda x, y: nlp(x).similarity(nlp(y)), threshold=0.5)
-    soft_tfidf = SoftTfIdf([list_1, list_2], sim_func=Levenshtein().get_sim_score, threshold=0.5)
-    return (soft_tfidf.get_raw_score(list_1, list_2))
+def list_histogram_similarity(string_list1, string_list2):
+    hist_1 = sorted(list(Counter([x for x in string_list1 if x]).values()))
+    hist_2 = sorted(list(Counter([x for x in string_list2 if x]).values()))
+    if not hist_1 or not hist_2:
+        return 0
+    return ks_2samp(hist_1, hist_2)[1]
+
+
+def list_total_sim(list_1, list_2):
+    w2v_sim = list_w2v_similarity(list_1, list_2)
+    cos_sim = list_jaccard_similarity(list_1, list_2)
+    # ks_sim = list_histogram_similarity(list_1, list_2)
+    return (cos_sim + w2v_sim) / 2
+
+
+def list_w2v_similarity(list_1, list_2):
+    vec_1 = nlp(" ".join(list_1))
+    vec_2 = nlp(" ".join(list_2))
+
+    return vec_1.similarity(vec_2)

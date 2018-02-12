@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from syntactic.generation.atomic import *
-from utils.string import list_soft_jaccard_similarity
+from utils.string import list_total_sim
 
 
 class Operation(object):
@@ -54,7 +54,7 @@ class PartOf(Operation):
             return True
 
     def score_function(self):
-        return list_soft_jaccard_similarity(self.raw_ev.values, self.transformed_ev.values)
+        return list_total_sim(self.raw_ev.values, self.transformed_ev.values)
 
     def transform(self):
         return self.raw_ev.values[:]
@@ -75,7 +75,7 @@ class Upper(Operation):
 
     def score_function(self):
         value_list = [x.upper() for x in self.raw_ev.values]
-        return list_soft_jaccard_similarity(value_list, self.transformed_ev.values)
+        return list_total_sim(value_list, self.transformed_ev.values)
 
     def transform(self):
         return [x.toupper() for x in self.raw_ev.values]
@@ -96,7 +96,7 @@ class Lower(Operation):
 
     def score_function(self):
         value_list = [x.lower() for x in self.raw_ev.values]
-        return list_soft_jaccard_similarity(value_list, self.transformed_ev.values)
+        return list_total_sim(value_list, self.transformed_ev.values)
 
     def transform(self):
         return [x.lower() for x in self.raw_ev.values]
@@ -119,7 +119,7 @@ class SubStr(Operation):
 
         score_dict = defaultdict(lambda: 0)
 
-        for i in range(0, min_length - length):
+        for i in range(min_length - length + 1):
             value_list = []
             for value in self.raw_ev.values:
                 value_list.append(value[i: i + length])
@@ -138,6 +138,9 @@ class SubStr(Operation):
         if self.score:
             self.index = list(score_dict.keys())[list(score_dict.values()).index(self.score)]
 
+    def __str__(self):
+        return "SubString(%s, %s)" % (self.index, self.length)
+
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
         if raw_ev.atomic in [START_TOKEN, END_TOKEN] or transformed_ev.atomic in [START_TOKEN, END_TOKEN]:
@@ -153,7 +156,7 @@ class SubStr(Operation):
         return self.score
 
     def score_range(self, value_list):
-        return list_soft_jaccard_similarity(value_list, self.raw_ev.values)
+        return list_total_sim(value_list, self.transformed_ev.values)
 
     def transform(self):
         return [x[self.index:self.index + self.length] for x in self.raw_ev.values]
@@ -172,7 +175,7 @@ class Replace(Operation):
     def score_function(self):
         if self.raw_ev.atomic in [START_TOKEN, END_TOKEN]:
             return 1
-        return list_soft_jaccard_similarity(self.raw_ev.values, self.transformed_ev.values)
+        return list_total_sim(self.raw_ev.values, self.transformed_ev.values)
 
     def transform(self):
         return self.raw_ev.values[:]

@@ -87,18 +87,17 @@ class HierarchicalModel:
             else:
                 text_list = uncovered_list
 
-            uncovered_list = [x for x in uncovered_list if x not in set(text_list)]
-
             seed_set = self.seed_cluster(text_list)
-            print(seed_set)
 
             for text in text_list:
                 if text in seed_set:
                     pre_cluster_map[text].append(text)
+                    uncovered_list.remove(text)
                 else:
                     min_seed = self.nearest_seeds_map[text]
                     if min_seed in seed_set:
                         pre_cluster_map[min_seed].append(text)
+                        uncovered_list.remove(text)
 
             for seed, cluster_value_list in pre_cluster_map.items():
                 self.clusters.append(Cluster.generate(seed, cluster_value_list, self.sim_map))
@@ -127,7 +126,7 @@ class HierarchicalModel:
             new_seed, min_sim = self.min_sim_sample(text_list, seed_set)
             min_sim_list.append(min_sim)
 
-            print(min_sim_list, new_seed, seed_set)
+            print(min_sim_list, new_seed, seed_set, self.nearest_seeds_map[new_seed])
             if not new_seed:
                 return seed_set
             seed_set.append(new_seed)
@@ -150,12 +149,15 @@ class HierarchicalModel:
 
             if is_cached:
                 self.intersection_map[text_1][text_2] = graph
-                self.intersection_map[text_1][text_2] = graph
+                self.intersection_map[text_2][text_1] = graph
                 self.num_edge_map[text_1] = graph_1.num_edge()
                 self.num_edge_map[text_2] = graph_2.num_edge()
                 self.graph_map[text_1] = graph_1
 
+        #print("Text", text_1, text_2)
+
         if not graph:
+            #print("No graph")
             return 0
 
         if self.num_edge_map[text_1]:
@@ -168,7 +170,7 @@ class HierarchicalModel:
         else:
             num_edge_2 = Graph.generate(text_2).num_edge()
 
-        # print(graph.num_edge(), num_edge_1, num_edge_2)
+        #print(graph.num_edge(), num_edge_1, num_edge_2)
         return graph.num_edge() * 1.0 / min(num_edge_1, num_edge_2)
 
     def min_sim_sample(self, text_list, anchor_set):
@@ -184,6 +186,7 @@ class HierarchicalModel:
                 else:
                     if self.sim_map[anchor][text] == -1:
                         self.sim_map[anchor][text] = self.similarity(anchor, text, is_cached=True)
+                        #print(anchor, text, self.sim_map[anchor][text])
                         self.sim_map[text][anchor] = self.sim_map[anchor][text]
 
                 if self.sim_map[anchor][text] > max_sim:
