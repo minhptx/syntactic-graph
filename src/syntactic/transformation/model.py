@@ -80,9 +80,9 @@ class TransformationModel:
                     distance_map[next_node] = distance_map[current_node] + sim_matrix[current_node][next_node]
                     previous_map[next_node] = current_node
 
-            print("Topo", current_node)
+            # print("Topo", current_node)
 
-        print("End")
+        # print("End")
         current_node = end_node
 
         path = [end_node]
@@ -112,7 +112,7 @@ class TransformationModel:
 
                                 for candidate in candidates:
                                     score = candidate.score_function()
-                                    print(ev_1.values[:3], ev_2.values[:3], candidate, score)
+                                    # print(ev_1.values[:3], ev_2.values[:3], candidate, score)
                                     candidate_map[(start_node_2, end_node_2)].append((score, candidate))
 
         return candidate_map
