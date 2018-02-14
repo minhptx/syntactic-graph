@@ -14,7 +14,7 @@ class MappingEvaluation:
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
         self.transformed_data_dict = defaultdict(lambda: [])
-        self.folder_path = "data/noisy"
+        self.folder_path = "data/transformation"
         self.name_list = []
 
     def read_data(self):
@@ -25,7 +25,7 @@ class MappingEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
         # for file_name in sorted(os.listdir(raw_data_path))[0:100]:
-        for file_name in ["1st_dimension.csv"]:
+        for file_name in ["lat_long.csv"]:
             print(file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
@@ -57,14 +57,14 @@ class MappingEvaluation:
 
             
 
-            for cluster_1 in raw_model.clusters:
-                for cluster_2 in transformed_model.clusters:
-                    graph_1 = cluster_1.pattern_graph
-                    graph_2 = cluster_2.pattern_graph
-
-                    model = ClassificationModel(graph_2)
-                    model.train()
-                    model.predict(graph_1)
+            # for cluster_1 in raw_model.clusters:
+            #     for cluster_2 in transformed_model.clusters:
+            #         graph_1 = cluster_1.pattern_graph
+            #         graph_2 = cluster_2.pattern_graph
+            #
+            #         model = ClassificationModel(graph_2)
+            #         model.train()
+            #         model.predict(graph_1)
 
         return accuracy_list
 
