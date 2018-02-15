@@ -24,29 +24,30 @@ class Cluster:
     def generate(seed, cluster_value_list, sim_map):
         print("Generate ...", len(cluster_value_list), cluster_value_list)
         seed_graph = Graph.generate(seed)
+        print(seed, cluster_value_list)
+        cluster_value_list.remove(seed)
         if cluster_value_list:
             min_sim_sample = min(cluster_value_list, key=lambda x: sim_map[seed][x])
         else:
-            return Cluster([seed], seed_graph)
+            return Cluster([seed], seed_graph), []
         min_sim_graph = Graph.generate(min_sim_sample)
         cluster_graph = seed_graph.intersect(min_sim_graph)
-        print(seed, min_sim_sample)
+
+        cluster_value_list.remove(min_sim_sample)
+
+        no_fit_list = []
 
         for cluster_text in cluster_value_list:
             # print(cluster_text)
             if cluster_graph.is_matched(cluster_text, is_add=True):
                 cluster_graph.values.append("^" + cluster_text + "$")
-                continue
             else:
                 graph = Graph.generate(cluster_text)
                 result = cluster_graph.intersect(graph)
-                if result:
-                    cluster_graph = result
-                else:
-                    result = seed_graph.intersect(graph)
-                    cluster_graph = cluster_graph.intersect(result)
+                if result is None:
+                    no_fit_list.append(cluster_text)
 
-        return Cluster(cluster_value_list, cluster_graph)
+        return Cluster(cluster_value_list + [seed, min_sim_sample], cluster_graph), no_fit_list
 
 
 class HierarchicalModel:
@@ -59,7 +60,6 @@ class HierarchicalModel:
         self.graph_map = defaultdict(lambda: -1)
         self.num_edge_map = defaultdict(lambda: 0)
         self.sim_map = defaultdict(lambda: defaultdict(lambda: -1))
-        self.nearest_seeds_map = defaultdict(lambda: None)
         self.max_sim = defaultdict(lambda: 0)
 
     def get_cluster_labels(self):
@@ -86,22 +86,27 @@ class HierarchicalModel:
             if len(uncovered_list) > 100:
                 text_list = random.sample(uncovered_list, 100)
             else:
-                text_list = uncovered_list
+                text_list = uncovered_list[:]
 
             seed_set = self.seed_cluster(text_list)
+
+            print("Text", text_list, seed_set)
 
             for text in text_list:
                 if text in seed_set:
                     pre_cluster_map[text].append(text)
                     uncovered_list.remove(text)
                 else:
-                    min_seed = self.nearest_seeds_map[text]
-                    if min_seed in seed_set:
+                    min_seed, min_distance = \
+                        max([(x, y) for x, y in self.sim_map[text].items() if x in seed_set], key=lambda x: x[1])
+                    if min_seed in text_list and min_distance > 0:
                         pre_cluster_map[min_seed].append(text)
                         uncovered_list.remove(text)
 
             for seed, cluster_value_list in pre_cluster_map.items():
-                self.clusters.append(Cluster.generate(seed, cluster_value_list, self.sim_map))
+                cluster, no_fit_list = Cluster.generate(seed, cluster_value_list, self.sim_map)
+                self.clusters.append(cluster)
+                uncovered_list = uncovered_list + no_fit_list
 
             remove_list = []
 
@@ -120,18 +125,20 @@ class HierarchicalModel:
         min_sim_list = [-2, -1]
         min_sim = 0
 
+        sample_list = text_list[:]
+
         seed_set = [sorted(text_list, key=lambda x: len(x))[0]]
 
         while min_sim < 0.1 or abs(min_sim_list[-2] - min_sim_list[-1]) > 0.1:
             # print(text_list)
-            new_seed, min_sim = self.min_sim_sample(text_list, seed_set)
+            new_seed, min_sim = self.min_sim_sample(sample_list, seed_set)
             min_sim_list.append(min_sim)
 
-            print(min_sim_list, new_seed, seed_set, self.nearest_seeds_map[new_seed])
+            print(min_sim_list, new_seed, seed_set)
             if not new_seed:
                 return seed_set
             seed_set.append(new_seed)
-            text_list.remove(new_seed)
+            sample_list.remove(new_seed)
 
         return seed_set[:-2]
 
@@ -155,10 +162,10 @@ class HierarchicalModel:
                 self.num_edge_map[text_2] = graph_2.num_edge()
                 self.graph_map[text_1] = graph_1
 
-        #print("Text", text_1, text_2)
+        # print("Text", text_1, text_2)
 
         if not graph:
-            #print("No graph")
+            # print("No graph")
             return 0
 
         if self.num_edge_map[text_1]:
@@ -171,7 +178,7 @@ class HierarchicalModel:
         else:
             num_edge_2 = Graph.generate(text_2).num_edge()
 
-        #print(graph.num_edge(), num_edge_1, num_edge_2)
+        # print(graph.num_edge(), num_edge_1, num_edge_2)
         return graph.num_edge() * 1.0 / min(num_edge_1, num_edge_2)
 
     def min_sim_sample(self, text_list, anchor_set):
@@ -187,15 +194,13 @@ class HierarchicalModel:
                 else:
                     if self.sim_map[anchor][text] == -1:
                         self.sim_map[anchor][text] = self.similarity(anchor, text, is_cached=True)
-                        #print(anchor, text, self.sim_map[anchor][text])
+                        # print(anchor, text, self.sim_map[anchor][text])
                         self.sim_map[text][anchor] = self.sim_map[anchor][text]
 
-                if self.sim_map[anchor][text] > max_sim:
-                    max_sim = self.sim_map[anchor][text]
-                    # if self.sim_map[anchor][text] > 0:
-                    self.nearest_seeds_map[text] = anchor
+                # print(text, max_sim)
+                if self.sim_map[text][anchor] > max_sim:
+                    max_sim = self.sim_map[text][anchor]
 
-            # print(text, max_sim)
             self.max_sim[text] = max_sim
             if max_sim < min_sim:
                 max_sample = text

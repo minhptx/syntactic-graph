@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+import time
+
 from syntactic.transformation.atomic import Lower, Upper, PartOf, SubStr, Constant, Replace
 
 
@@ -13,12 +15,15 @@ class TransformationModel:
         best_operations = defaultdict(lambda: defaultdict(lambda: None))
         sim_map = defaultdict(lambda: defaultdict(lambda: -1))
 
+        start = time.time()
         candidate_map = TransformationModel.generate(self.raw_graph, self.transformed_graph)
+        print("Time generate", time.time() - start)
 
         for start_node, end_node in candidate_map:
             best_operation = max(candidate_map[(start_node, end_node)], key=lambda x: x[0])
             best_operations[start_node][end_node] = best_operation[1]
             sim_map[start_node][end_node] = best_operation[0]
+
 
         path, cost = TransformationModel.dijkstra(sim_map, self.transformed_graph.start_node,
                                                   self.transformed_graph.end_node)

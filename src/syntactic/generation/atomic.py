@@ -165,7 +165,7 @@ class AlphabetPunctuation(Atomic):
 
 class Any(Atomic):
     def __init__(self):
-        super(Any, self).__init__("AlphabetPunctuation", r".+", "any")
+        super(Any, self).__init__("AlphabetPunctuation", r"[\p{L}\p{P}\p{N}]+", "any")
 
     def is_subset(self, atomic):
         if atomic in [ANY]:
@@ -224,7 +224,7 @@ ANY = Any()
 TEXT = Text()
 
 ATOMIC_LIST = [PROPER_CASE, UPPER_CASE, LOWER_CASE, DIGIT, ALPHABET, ALPHANUM, WHITESPACE, PROPER_CASE_WS,
-               LOWER_CASE_WS, UPPER_CASE_WS, ALPHABET_WS, PUNCTUATION]
+               LOWER_CASE_WS, UPPER_CASE_WS, ALPHABET_WS, PUNCTUATION, ALPHA_PUNC]
 
 TOKEN_TYPES = [UPPER_CASE, LOWER_CASE, ALPHABET, WHITESPACE, PUNCTUATION, DIGIT]
 

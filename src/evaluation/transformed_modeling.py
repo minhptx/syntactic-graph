@@ -14,7 +14,7 @@ class MappingEvaluation:
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
         self.transformed_data_dict = defaultdict(lambda: [])
-        self.folder_path = "data/transformation"
+        self.folder_path = "data/noisy"
         self.name_list = []
 
     def read_data(self):
@@ -47,7 +47,14 @@ class MappingEvaluation:
 
             transformed_model = HierarchicalModel(transformed_list)
             transformed_model.build_hierarchy()
-            # except:
+
+            for cluster in raw_model.clusters:
+                for node_1 in cluster.pattern_graph.edge_map:
+                    for node_2 in cluster.pattern_graph.edge_map[node_1]:
+                        for ev in cluster.pattern_graph.edge_map[node_1][node_2].value_list:
+                            print(node_1, node_2, ev.atomic.name, ev.atomic.regex, ev.length, ev.nth, ev.values[:3])
+
+            print("=======================================================================")
 
             for cluster in transformed_model.clusters:
                 for node_1 in cluster.pattern_graph.edge_map:

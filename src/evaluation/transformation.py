@@ -14,7 +14,7 @@ class TransformationEvaluation:
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
         self.transformed_data_dict = defaultdict(lambda: [])
-        self.folder_path = "data/transformation"
+        self.folder_path = "data/noisy"
         self.name_list = []
 
     def read_data(self):
@@ -24,9 +24,9 @@ class TransformationEvaluation:
         transformed_data_path = os.path.join(self.folder_path, "input", "transformed")
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
-        # for file_name in sorted(os.listdir(raw_data_path)):
-        for file_name in ["lat_long.csv"]:
-            if file_name in ["comic.csv"]:
+        for file_name in sorted(os.listdir(raw_data_path)):
+        # for file_name in ["birth.csv"]:
+            if file_name in ["comic.csv", "lat_long.csv"]:
                 continue
             print("File", file_name)
             #
@@ -57,7 +57,6 @@ class TransformationEvaluation:
             cost_map = defaultdict(lambda: defaultdict(lambda: float("inf")))
             result_map = defaultdict(lambda: defaultdict(lambda: None))
 
-            count = len(groundtruth_list)
             true_count = 0
             false_count = 0
 
@@ -77,23 +76,32 @@ class TransformationEvaluation:
             for idx_1 in result_map:
                 idx_2 = min(cost_map[idx_1].items(), key=lambda x: x[1])[0]
                 result_list = result_map[idx_1][idx_2]
+                print("Size", raw_model.clusters[idx_1].pattern_graph.values)
+                print(result_list)
+                print(raw_model.clusters[idx_1].values)
                 for idx, values in result_list.items():
                     value_str = "".join(values)
-                    # print("Size", len(raw_model.clusters[idx_1].pattern_graph.values), len(result_list))
-                    # print("Size", len(groundtruth_list), len(raw_input_list))
+
+                    # print("Length", len(raw_model.clusters[idx_1].pattern_graph.values), len(result_list))
+                    # print(raw_model.clusters[idx_1].pattern_graph.values)
                     raw_str = raw_model.clusters[idx_1].pattern_graph.values[idx]
 
                     raw_idx = raw_input_list.index(raw_str[1:-1])
                     # print(value_str)
                     # print(raw_str)
                     # print(groundtruth_list[raw_idx].strip())
-                    groundtruth = groundtruth_list[raw_idx]
+                    # print(len(groundtruth_list), len(raw_input_list))
 
-                    if value_str.strip() == groundtruth.strip():
-                        true_count += 1
-                    else:
+                    try:
+                        groundtruth = groundtruth_list[raw_idx]
+                        if value_str.strip() == groundtruth.strip():
+                            true_count += 1
+                        else:
+                            false_count += 1
+                            print("False", value_str, groundtruth)
+                    except Exception as e:
+                        print(e)
                         false_count += 1
-                        print("False", value_str, groundtruth)
 
             accuracy = true_count * 1.0 / (false_count + true_count)
 
