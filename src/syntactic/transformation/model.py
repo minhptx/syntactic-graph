@@ -117,7 +117,7 @@ class TransformationModel:
 
                                 for candidate in candidates:
                                     score = candidate.score_function()
-                                    # print(ev_1.values[:3], ev_2.values[:3], candidate, score)
+                                    print(ev_1.values[:3], ev_2.values[:3], candidate, score)
                                     candidate_map[(start_node_2, end_node_2)].append((score, candidate))
 
         return candidate_map

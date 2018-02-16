@@ -225,15 +225,13 @@ class Graph:
         return atomic_pos_dict
 
     @staticmethod
-    def token_type_segment(input_str):
-        token_type_dict = defaultdict(lambda: [])
+    def token_type_segment(substr):
 
         for token_type in TOKEN_TYPES:
-            matches = re.finditer(token_type.regex, input_str[1: - 1])
-            for match in matches:
-                token_type_dict[token_type.name].append((match.start() + 1, match.end() + 1))
+            if re.match("^" + token_type.regex + "$", substr):
+                return True
 
-        return token_type_dict
+        return False
 
     @staticmethod
     def generate(input_str):
@@ -264,16 +262,18 @@ class Graph:
                 # graph.edge_map[(1,)][(i,)].add_edge_value(
                 #     EdgeValue(TEXT, 1, neighbor=atomic, values=[sub_str]))  # fixed-length
 
-        for atomic in TOKEN_TYPES:
-            for i, j in token_type_dict[atomic.name]:
+        for i in range(1, n - 1):
+            for j in range(2, n):
                 sub_str = input_str[i:j]
-                if i == 0 or j == n:
+
+                if not Graph.token_type_segment(sub_str):
                     continue
-                left_index = token_type_dict[atomic.name].index((i, j))
-                right_index = len(token_type_dict[atomic.name]) - left_index
+
+                # left_index = token_type_dict[atomic.name].index((i, j))
+                # right_index = len(token_type_dict[atomic.name]) - left_index
                 constant = ConstantString(sub_str)
                 graph.edge_map[(i,)][(j,)].add_edge_value(
-                    PatternToken(constant, [left_index + 1, -right_index], values=[sub_str]))  # variable-length
+                    PatternToken(constant, [1], values=[sub_str]))  # variable-length
 
                 # graph.edge_map[(j,)][(n - 1,)].add_edge_value(
                 #     EdgeValue(TEXT, -1, neighbor=constant, values=[sub_str]))  # fixed-length

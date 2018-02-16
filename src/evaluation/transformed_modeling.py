@@ -25,7 +25,7 @@ class MappingEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
         # for file_name in sorted(os.listdir(raw_data_path))[0:100]:
-        for file_name in ["lat_long.csv"]:
+        for file_name in ["bd4.csv"]:
             print(file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
@@ -52,7 +52,7 @@ class MappingEvaluation:
                 for node_1 in cluster.pattern_graph.edge_map:
                     for node_2 in cluster.pattern_graph.edge_map[node_1]:
                         for ev in cluster.pattern_graph.edge_map[node_1][node_2].value_list:
-                            print(node_1, node_2, ev.atomic.name, ev.atomic.regex, ev.length, ev.nth, ev.values[:3])
+                            print(node_1, node_2, ev.atomic.name, ev.atomic.regex, ev.length, ev.nth, ev.values[:5])
 
             print("=======================================================================")
 
@@ -60,7 +60,7 @@ class MappingEvaluation:
                 for node_1 in cluster.pattern_graph.edge_map:
                     for node_2 in cluster.pattern_graph.edge_map[node_1]:
                         for ev in cluster.pattern_graph.edge_map[node_1][node_2].value_list:
-                            print(node_1, node_2, ev.atomic.name, ev.atomic.regex, ev.length, ev.nth, ev.values[:3])
+                            print(node_1, node_2, ev.atomic.name, ev.atomic.regex, ev.length, ev.nth, ev.values[:5])
 
             
 

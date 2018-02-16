@@ -161,21 +161,79 @@ class SubStr(Operation):
     def transform(self):
         return [x[self.index:self.index + self.length] for x in self.raw_ev.values]
 
-
 class Replace(Operation):
     def __init__(self, raw_ev, transformed_ev):
         super(Replace, self).__init__(raw_ev, transformed_ev)
+        self.score = 0
+        self.index = -1
+        self.length = transformed_ev.length
+        self.get_best_range()
+
+    def get_best_range(self):
+        length = self.raw_ev.length
+        # print("Value list", self.raw_ev.values)
+        # print("Value list", self.transformed_ev.values)
+
+        min_length = min([len(x) for x in self.transformed_ev.values])
+
+        score_dict = defaultdict(lambda: 0)
+
+        for i in range(min_length - length + 1):
+            value_list = []
+            for value in self.transformed_ev.values:
+                value_list.append(value[i: i + length])
+            score_dict[i] = self.score_range(value_list)
+
+            value_list = []
+            for value in self.transformed_ev.values:
+                value_list.append(value[i: i + length])
+            score_dict[-i] = self.score_range(value_list)
+
+        # print(score_dict, min_length, length)
+        if score_dict:
+            self.score = max(score_dict.values())
+        else:
+            self.score = 0
+        if self.score:
+            self.index = list(score_dict.keys())[list(score_dict.values()).index(self.score)]
+
+    def __str__(self):
+        return "SubString(%s, %s)" % (self.index, self.length)
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
-        if transformed_ev == raw_ev:
+        if transformed_ev.atomic in [START_TOKEN, END_TOKEN] or raw_ev.atomic in [START_TOKEN, END_TOKEN]:
+            return False
+        if raw_ev.atomic != transformed_ev.atomic or raw_ev.length == -1:
+            return False
+        if transformed_ev.length >= raw_ev.length or transformed_ev.length == -1:
             return True
-        return False
 
     def score_function(self):
-        if self.raw_ev.atomic in [START_TOKEN, END_TOKEN]:
-            return 1
-        return list_total_sim(self.raw_ev.values, self.transformed_ev.values)
+        if self.score == -1:
+            self.get_best_range()
+        return self.score
+
+    def score_range(self, value_list):
+        return list_total_sim(value_list, self.raw_ev.values)
 
     def transform(self):
-        return self.raw_ev.values[:]
+        return [x[self.index:self.index + self.length] for x in self.raw_ev.values]
+
+# class Replace(Operation):
+#     def __init__(self, raw_ev, transformed_ev):
+#         super(Replace, self).__init__(raw_ev, transformed_ev)
+#
+#     @staticmethod
+#     def check_condition(raw_ev, transformed_ev):
+#         if transformed_ev == raw_ev:
+#             return True
+#         return False
+#
+#     def score_function(self):
+#         if self.raw_ev.atomic in [START_TOKEN, END_TOKEN]:
+#             return 1
+#         return list_total_sim(self.raw_ev.values, self.transformed_ev.values)
+#
+#     def transform(self):
+#         return self.raw_ev.values[:]

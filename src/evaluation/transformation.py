@@ -1,4 +1,5 @@
 import codecs
+import csv
 import os
 from collections import defaultdict
 
@@ -18,16 +19,16 @@ class TransformationEvaluation:
         self.name_list = []
 
     def read_data(self):
-        accuracy_list = []
+        accuracy_dict = {}
 
         raw_data_path = os.path.join(self.folder_path, "input", 'raw')
         transformed_data_path = os.path.join(self.folder_path, "input", "transformed")
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
-        for file_name in sorted(os.listdir(raw_data_path)):
-        # for file_name in ["birth.csv"]:
-            if file_name in ["comic.csv", "lat_long.csv"]:
-                continue
+        # for file_name in sorted(os.listdir(raw_data_path)):
+        for file_name in ["bd1.csv"]:
+        #     if file_name in ["comic.csv", "lat_long.csv"]:
+        #         continue
             print("File", file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
@@ -98,17 +99,23 @@ class TransformationEvaluation:
                             true_count += 1
                         else:
                             false_count += 1
-                            print("False", value_str, groundtruth)
+                            # print("False", value_str, groundtruth)
                     except Exception as e:
                         print(e)
                         false_count += 1
 
             accuracy = true_count * 1.0 / (false_count + true_count)
 
-            accuracy_list.append(accuracy)
+            accuracy_dict[file_name] = accuracy
             print(accuracy)
 
-        print(np.mean(accuracy_list))
+        with open("result.csv", "w") as f:
+            writer = csv.writer(f)
+
+            for name, acc in accuracy_dict.items():
+                writer.writerow([name, acc])
+
+        print(np.mean(list(accuracy_dict.values())))
 
 
 if __name__ == "__main__":
