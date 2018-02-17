@@ -1,8 +1,7 @@
+import time
 from collections import defaultdict
 
-import time
-
-from syntactic.transformation.atomic import Lower, Upper, PartOf, SubStr, Constant, Replace
+from syntactic.transformation.atomic import Lower, Upper, PartOf, SubStr, Constant
 
 
 class TransformationModel:
@@ -24,7 +23,6 @@ class TransformationModel:
             best_operations[start_node][end_node] = best_operation[1]
             sim_map[start_node][end_node] = best_operation[0]
 
-
         path, cost = TransformationModel.dijkstra(sim_map, self.transformed_graph.start_node,
                                                   self.transformed_graph.end_node)
 
@@ -37,7 +35,8 @@ class TransformationModel:
         print("Best Transformation")
         for operation in operation_path:
             print(operation.raw_ev.values[:3], operation.transformed_ev.values[:3], operation,
-                  operation.score_function(), operation.transform()[:3])
+                  operation.score_function(),
+                  operation.transform()[:3])
             transformed_column_list.append(operation.transform())
 
         transformed_value_list = defaultdict(lambda: [])
@@ -77,8 +76,11 @@ class TransformationModel:
 
         topo_list = TransformationModel.topo_sort(start_node, sim_matrix)
 
+        print(topo_list)
+
         while topo_list:
             current_node = topo_list.pop(0)
+            print(current_node, topo_list)
 
             for next_node in sim_matrix[current_node]:
                 if distance_map[next_node] < distance_map[current_node] + sim_matrix[current_node][next_node]:
@@ -87,15 +89,17 @@ class TransformationModel:
 
             # print("Topo", current_node)
 
-        # print("End")
+            # print("End")
         current_node = end_node
 
         path = [end_node]
+        print("End")
 
         while current_node != start_node:
             path.insert(0, previous_map[current_node])
             current_node = previous_map[current_node]
 
+        print("End")
         return path, distance_map[end_node]
 
     @staticmethod
@@ -125,7 +129,7 @@ class TransformationModel:
     @staticmethod
     def get_all_candidates(ev_1, ev_2):
         candidate_operations = []
-        for operation in [Lower, Upper, PartOf, Constant, SubStr, Replace]:
+        for operation in [Lower, Upper, PartOf, Constant, SubStr]:
             if operation.check_condition(ev_1, ev_2):
                 candidate_operations.append(operation(ev_1, ev_2))
         return candidate_operations

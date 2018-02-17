@@ -14,7 +14,7 @@ class MappingEvaluation:
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
         self.transformed_data_dict = defaultdict(lambda: [])
-        self.folder_path = "data/noisy"
+        self.folder_path = "data/transformation"
         self.name_list = []
 
     def read_data(self):
@@ -42,8 +42,8 @@ class MappingEvaluation:
                 if groundtruth_list[0][0] == '"':
                     groundtruth_list = [x.strip()[1:-1] for x in groundtruth_list]
             # try:
-            raw_model = HierarchicalModel(raw_list)
-            raw_model.build_hierarchy()
+            # raw_model = HierarchicalModel(raw_list)
+            # raw_model.build_hierarchy()
 
             transformed_model = HierarchicalModel(transformed_list)
             transformed_model.build_hierarchy()

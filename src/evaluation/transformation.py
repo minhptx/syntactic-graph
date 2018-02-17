@@ -15,7 +15,7 @@ class TransformationEvaluation:
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
         self.transformed_data_dict = defaultdict(lambda: [])
-        self.folder_path = "data/noisy"
+        self.folder_path = "data/transformation"
         self.name_list = []
 
     def read_data(self):
