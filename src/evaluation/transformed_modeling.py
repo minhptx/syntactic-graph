@@ -24,8 +24,8 @@ class MappingEvaluation:
         transformed_data_path = os.path.join(self.folder_path, "input", "transformed")
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
-        # for file_name in sorted(os.listdir(raw_data_path))[0:100]:
-        for file_name in ["bd4.csv"]:
+        # for file_name in sorted(os.listdir(raw_data_path))[0:10]:
+        for file_name in ["107.csv"]:
             print(file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
@@ -42,17 +42,17 @@ class MappingEvaluation:
                 if groundtruth_list[0][0] == '"':
                     groundtruth_list = [x.strip()[1:-1] for x in groundtruth_list]
             # try:
-            # raw_model = HierarchicalModel(raw_list)
-            # raw_model.build_hierarchy()
+            raw_model = HierarchicalModel(raw_list)
+            raw_model.build_hierarchy()
 
             transformed_model = HierarchicalModel(transformed_list)
             transformed_model.build_hierarchy()
 
-            for cluster in raw_model.clusters:
-                for node_1 in cluster.pattern_graph.edge_map:
-                    for node_2 in cluster.pattern_graph.edge_map[node_1]:
-                        for ev in cluster.pattern_graph.edge_map[node_1][node_2].value_list:
-                            print(node_1, node_2, ev.atomic.name, ev.atomic.regex, ev.length, ev.nth, ev.values[:5])
+            # for cluster in raw_model.clusters:
+            #     for node_1 in cluster.pattern_graph.edge_map:
+            #         for node_2 in cluster.pattern_graph.edge_map[node_1]:
+            #             for ev in cluster.pattern_graph.edge_map[node_1][node_2].value_list:
+            #                 print(node_1, node_2, ev.atomic.name, ev.atomic.regex, ev.length, ev.nth, ev.values[:5])
 
             print("=======================================================================")
 

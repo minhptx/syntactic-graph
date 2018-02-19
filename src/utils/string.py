@@ -1,4 +1,5 @@
 import math
+import random
 from collections import Counter
 
 import numpy as np
@@ -104,6 +105,10 @@ def list_total_sim(list_1, list_2):
 
 
 def list_w2v_similarity(list_1, list_2):
+    if len(list_1) > 500:
+        list_1  = random.sample(list_1, 500)
+    if len(list_2) > 500:
+        list_2  = random.sample(list_2, 500)
     vec_1 = nlp(" ".join(list_1))
     vec_2 = nlp(" ".join(list_2))
 

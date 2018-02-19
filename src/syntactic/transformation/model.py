@@ -1,7 +1,7 @@
 import time
 from collections import defaultdict
 
-from syntactic.transformation.atomic import Lower, Upper, PartOf, SubStr, Constant
+from syntactic.transformation.atomic import Lower, Upper, PartOf, SubStr, Constant, Replace
 
 
 class TransformationModel:
@@ -25,6 +25,9 @@ class TransformationModel:
 
         path, cost = TransformationModel.dijkstra(sim_map, self.transformed_graph.start_node,
                                                   self.transformed_graph.end_node)
+
+        if path is None:
+            return [], float("inf")
 
         operation_path = []
         for i in range(1, len(path)):
@@ -76,11 +79,10 @@ class TransformationModel:
 
         topo_list = TransformationModel.topo_sort(start_node, sim_matrix)
 
-        print(topo_list)
+        print(topo_list, sim_matrix)
 
         while topo_list:
             current_node = topo_list.pop(0)
-            print(current_node, topo_list)
 
             for next_node in sim_matrix[current_node]:
                 if distance_map[next_node] < distance_map[current_node] + sim_matrix[current_node][next_node]:
@@ -93,11 +95,14 @@ class TransformationModel:
         current_node = end_node
 
         path = [end_node]
-        print("End")
+        print(end_node)
+        print(previous_map)
 
         while current_node != start_node:
             path.insert(0, previous_map[current_node])
             current_node = previous_map[current_node]
+            if current_node is None:
+                return None, float("inf")
 
         print("End")
         return path, distance_map[end_node]
@@ -129,7 +134,7 @@ class TransformationModel:
     @staticmethod
     def get_all_candidates(ev_1, ev_2):
         candidate_operations = []
-        for operation in [Lower, Upper, PartOf, Constant, SubStr]:
+        for operation in [Lower, Upper, PartOf, Constant, SubStr, Replace]:
             if operation.check_condition(ev_1, ev_2):
                 candidate_operations.append(operation(ev_1, ev_2))
         return candidate_operations

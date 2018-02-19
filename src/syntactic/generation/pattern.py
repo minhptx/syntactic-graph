@@ -225,13 +225,15 @@ class Graph:
         return atomic_pos_dict
 
     @staticmethod
-    def token_type_segment(substr):
+    def token_type_segment(input_str):
+
+        token_type_dict = defaultdict(lambda: [])
 
         for token_type in TOKEN_TYPES:
-            if re.match("^" + token_type.regex + "$", substr):
-                return True
-
-        return False
+            matches = re.finditer(token_type.regex, input_str[1: - 1])
+            for match in matches:
+                token_type_dict[token_type.name].append((match.start() + 1, match.end() + 1))
+        return token_type_dict
 
     @staticmethod
     def generate(input_str):
@@ -242,8 +244,8 @@ class Graph:
         atomic_pos_dict = Graph.atomic_profile(input_str)
         token_type_dict = Graph.token_type_segment(input_str)
 
-        graph.edge_map[(0, )][(1, )] = Edge([PatternToken(START_TOKEN, [1])])
-        graph.edge_map[(n - 1, )][(n, )] = Edge([PatternToken(END_TOKEN, [1])])
+        graph.edge_map[(0,)][(1,)] = Edge([PatternToken(START_TOKEN, [1])])
+        graph.edge_map[(n - 1,)][(n,)] = Edge([PatternToken(END_TOKEN, [1])])
 
         for atomic in ATOMIC_LIST:
             for i, j in atomic_pos_dict[atomic.name]:
@@ -252,9 +254,9 @@ class Graph:
                     continue
                 left_index = atomic_pos_dict[atomic.name].index((i, j))
                 right_index = len(atomic_pos_dict[atomic.name]) - left_index
-                graph.edge_map[(i, )][(j, )].add_edge_value(
+                graph.edge_map[(i,)][(j,)].add_edge_value(
                     PatternToken(atomic, [left_index + 1, -right_index], values=[sub_str]))  # variable-length
-                graph.edge_map[(i, )][(j, )].add_edge_value(
+                graph.edge_map[(i,)][(j,)].add_edge_value(
                     PatternToken(atomic, [left_index + 1, -right_index], j - i, values=[sub_str]))  # fixed-length
 
                 # graph.edge_map[(j,)][(n - 1,)].add_edge_value(
@@ -262,26 +264,29 @@ class Graph:
                 # graph.edge_map[(1,)][(i,)].add_edge_value(
                 #     EdgeValue(TEXT, 1, neighbor=atomic, values=[sub_str]))  # fixed-length
 
-        for i in range(1, n):
-            for j in range(i + 1, n + 1):
-                sub_str = input_str[i:j]
-                print(sub_str)
-                if not Graph.token_type_segment(sub_str):
+        for atomic in TOKEN_TYPES:
+            for i, j in token_type_dict[atomic.name]:
+                if i == 0 or j == n:
                     continue
+                # if j - i >= 4:
+                #     continue
+                sub_str = input_str[i:j]
+                # if not Graph.token_type_segment(sub_str):
+                #     continue
 
-                # left_index = token_type_dict[atomic.name].index((i, j))
-                # right_index = len(token_type_dict[atomic.name]) - left_index
+                left_index = token_type_dict[atomic.name].index((i, j))
+                right_index = len(token_type_dict[atomic.name]) - left_index
                 constant = ConstantString(sub_str)
-                graph.edge_map[(i, )][(j, )].add_edge_value(PatternToken(constant, [1],
-                                                                         values=[sub_str]))  # variable-length
+                graph.edge_map[(i,)][(j,)].add_edge_value(PatternToken(constant, [left_index + 1, -right_index],
+                                                                       values=[sub_str]))  # variable-length
 
                 # graph.edge_map[(j,)][(n - 1,)].add_edge_value(
                 #     EdgeValue(TEXT, -1, neighbor=constant, values=[sub_str]))  # fixed-length
                 # graph.edge_map[(1,)][(i,)].add_edge_value(
                 #     EdgeValue(TEXT, 1, neighbor=constant, values=[sub_str]))  # fixed-length
 
-        graph.start_node = (0, )
-        graph.end_node = (n, )
+        graph.start_node = (0,)
+        graph.end_node = (n,)
 
         return graph
 
@@ -321,8 +326,8 @@ class Graph:
 
         n = len(value_list) + 2
 
-        graph.edge_map[(0, )][(1, )] = Edge([PatternToken(START_TOKEN, 1)])
-        graph.edge_map[(n - 1, )][(n, )] = Edge([PatternToken(END_TOKEN, 1)])
+        graph.edge_map[(0,)][(1,)] = Edge([PatternToken(START_TOKEN, 1)])
+        graph.edge_map[(n - 1,)][(n,)] = Edge([PatternToken(END_TOKEN, 1)])
 
         for idx in range(len(value_list)):
             i = idx + 1
@@ -336,7 +341,7 @@ class Graph:
                         length = length_list[0]
                     else:
                         length = -1
-                    graph.edge_map[(i, )][(i + 1, )].add_edge_value(
+                    graph.edge_map[(i,)][(i + 1,)].add_edge_value(
                         PatternToken(atomic, -1, length, values=value_list[idx]))
             if len(set(value_list[idx])) == 1:
                 for j in range(0, len(value_list[idx][0])):
@@ -347,14 +352,14 @@ class Graph:
 
                         if k <= j + 3:
                             atomic = ConstantString(value_list[idx][0])
-                            graph.edge_map[(i + j * 1.0 / len(value_list[idx][0]), )][(
-                                i + k * 1.0 / (len(value_list[idx][0])), )] = Edge([
-                                    PatternToken(atomic, -1, values=[sub_str]),
-                                    PatternToken(atomic, -1, values=[sub_str])
-                                ])
+                            graph.edge_map[(i + j * 1.0 / len(value_list[idx][0]),)][(
+                                i + k * 1.0 / (len(value_list[idx][0])),)] = Edge([
+                                PatternToken(atomic, -1, values=[sub_str]),
+                                PatternToken(atomic, -1, values=[sub_str])
+                            ])
 
-        graph.start_node = (0, )
-        graph.end_node = (n, )
+        graph.start_node = (0,)
+        graph.end_node = (n,)
         return graph
 
     @staticmethod

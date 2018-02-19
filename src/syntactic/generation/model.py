@@ -53,7 +53,7 @@ class Cluster:
 class HierarchicalModel:
 
     def __init__(self, text_list):
-        self.values = [x for x in text_list if x]
+        self.values = text_list
         self.pattern_graph_list = []
         self.clusters = []
         self.intersection_map = defaultdict(lambda: defaultdict(lambda: -1))
@@ -77,9 +77,11 @@ class HierarchicalModel:
 
     def build_hierarchy(self, num_cluster=100):
 
-        uncovered_list = list(set(self.values[:]))
+        uncovered_list = self.values[:]
 
         while uncovered_list:
+
+            print("Len uncovered", len(uncovered_list))
 
             pre_cluster_map = defaultdict(lambda: [])
 
@@ -120,6 +122,8 @@ class HierarchicalModel:
                     print(text)
 
             uncovered_list = [x for x in uncovered_list if x not in set(remove_list)]
+
+            print("Len uncovered", len(uncovered_list))
 
     def seed_cluster(self, text_list):
         min_sim_list = [-2, -1]

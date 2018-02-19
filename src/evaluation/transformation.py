@@ -5,6 +5,7 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+import time
 
 from syntactic.generation.model import HierarchicalModel
 from syntactic.transformation.model import TransformationModel
@@ -20,15 +21,18 @@ class TransformationEvaluation:
 
     def read_data(self):
         accuracy_dict = {}
+        time_dict = {}
 
         raw_data_path = os.path.join(self.folder_path, "input", 'raw')
         transformed_data_path = os.path.join(self.folder_path, "input", "transformed")
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
-        # for file_name in sorted(os.listdir(raw_data_path)):
-        for file_name in ["bd1.csv"]:
-        #     if file_name in ["comic.csv", "lat_long.csv"]:
-        #         continue
+        for file_name in sorted(os.listdir(raw_data_path))[:30]:
+            # for file_name in ["107.csv"]:
+            if file_name in ["116.csv"]:
+                continue
+            start = time.time()
+            #         continue
             print("File", file_name)
             #
             # if file_name in ["10.csv", "102.csv", "103.csv", "104.csv", "107.csv", "108.csv", "116.csv", "117.csv"]:
@@ -41,14 +45,18 @@ class TransformationEvaluation:
             transformed_list = pd.read_csv(transformed_file_path, dtype=object, header=None).iloc[:, 0].fillna(
                 "").values.tolist()
 
-            with codecs.open(groundtruth_file_path, encoding="utf-8") as reader:
-                groundtruth_list = list(reader.readlines())
+            with open(groundtruth_file_path, "r") as reader:
+                groundtruth_list = reader.readlines()
+                groundtruth_list = [x.strip() for x in groundtruth_list]
+
                 if groundtruth_list[0][0] == '"':
                     groundtruth_list = [x.strip()[1:-1] for x in groundtruth_list]
 
             # try:
             raw_model = HierarchicalModel(raw_input_list)
             raw_model.build_hierarchy()
+
+            print("Transformation")
 
             transformed_model = HierarchicalModel(transformed_list)
             transformed_model.build_hierarchy()
@@ -77,9 +85,12 @@ class TransformationEvaluation:
             for idx_1 in result_map:
                 idx_2 = min(cost_map[idx_1].items(), key=lambda x: x[1])[0]
                 result_list = result_map[idx_1][idx_2]
-                print("Size", raw_model.clusters[idx_1].pattern_graph.values)
-                print(result_list)
-                print(raw_model.clusters[idx_1].values)
+                # print("Size", raw_model.clusters[idx_1].pattern_graph.values)
+                # print(result_list)
+                # print(raw_model.clusters[idx_1].values)
+                print(true_count, false_count)
+                print(result_list, min(cost_map[idx_1].items(), key=lambda x: x[1]))
+
                 for idx, values in result_list.items():
                     value_str = "".join(values)
 
@@ -99,21 +110,27 @@ class TransformationEvaluation:
                             true_count += 1
                         else:
                             false_count += 1
-                            # print("False", value_str, groundtruth)
+                            print("False", value_str, groundtruth)
                     except Exception as e:
                         print(e)
                         false_count += 1
 
+            running_time = time.time() - start
             accuracy = true_count * 1.0 / (false_count + true_count)
 
             accuracy_dict[file_name] = accuracy
+            time_dict[file_name] = running_time
             print(accuracy)
+        print(accuracy_dict)
+        print(time_dict)
+        print(np.mean(list(accuracy_dict.values())))
+        print(np.mean(list(time_dict.values())))
 
         with open("result.csv", "w") as f:
             writer = csv.writer(f)
 
             for name, acc in accuracy_dict.items():
-                writer.writerow([name, acc])
+                writer.writerow([name, acc, time_dict[name]])
 
         print(np.mean(list(accuracy_dict.values())))
 

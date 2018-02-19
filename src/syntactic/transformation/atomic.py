@@ -28,7 +28,9 @@ class Constant(Operation):
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
-        if isinstance(transformed_ev.atomic, ConstantString) and raw_ev.atomic not in [START_TOKEN, END_TOKEN]:
+        if isinstance(transformed_ev.atomic, ConstantString):
+            return True
+        elif transformed_ev.atomic in [START_TOKEN, END_TOKEN]:
             return True
         else:
             return False
@@ -37,7 +39,10 @@ class Constant(Operation):
         return 1
 
     def transform(self):
-        return [self.transformed_ev.values[0] for x in self.raw_ev.values]
+        try:
+            return [self.transformed_ev.values[0] for x in self.raw_ev.values]
+        except:
+            return self.transformed_ev.values
 
 
 class PartOf(Operation):
@@ -147,8 +152,9 @@ class SubStr(Operation):
             return False
         if raw_ev.atomic != transformed_ev.atomic or transformed_ev.length == -1:
             return False
-        if raw_ev.length >= transformed_ev.length or raw_ev.length == -1:
+        if raw_ev.length >= transformed_ev.length:
             return True
+        return False
 
     def score_function(self):
         if self.score == -1:
@@ -161,12 +167,13 @@ class SubStr(Operation):
     def transform(self):
         return [x[self.index:self.index + self.length] for x in self.raw_ev.values]
 
+
 class Replace(Operation):
     def __init__(self, raw_ev, transformed_ev):
         super(Replace, self).__init__(raw_ev, transformed_ev)
         self.score = 0
         self.index = -1
-        self.length = transformed_ev.length
+        self.length = transformed_ev.length - raw_ev.length
         self.get_best_range()
 
     def get_best_range(self):
@@ -198,7 +205,7 @@ class Replace(Operation):
             self.index = list(score_dict.keys())[list(score_dict.values()).index(self.score)]
 
     def __str__(self):
-        return "SubString(%s, %s)" % (self.index, self.length)
+        return "Replace(%s, %s)" % (self.index, self.length)
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
@@ -206,8 +213,9 @@ class Replace(Operation):
             return False
         if raw_ev.atomic != transformed_ev.atomic or raw_ev.length == -1:
             return False
-        if transformed_ev.length >= raw_ev.length or transformed_ev.length == -1:
+        if transformed_ev.length >= raw_ev.length:
             return True
+        return False
 
     def score_function(self):
         if self.score == -1:
@@ -218,22 +226,22 @@ class Replace(Operation):
         return list_total_sim(value_list, self.raw_ev.values)
 
     def transform(self):
-        return [x[self.index:self.index + self.length] for x in self.raw_ev.values]
+        return [self.transformed_ev.values[0][:self.index] + x + self.transformed_ev.values[0][self.index + self.length:] for x in self.raw_ev.values]
 
-# class Replace(Operation):
-#     def __init__(self, raw_ev, transformed_ev):
-#         super(Replace, self).__init__(raw_ev, transformed_ev)
-#
-#     @staticmethod
-#     def check_condition(raw_ev, transformed_ev):
-#         if transformed_ev == raw_ev:
-#             return True
-#         return False
-#
-#     def score_function(self):
-#         if self.raw_ev.atomic in [START_TOKEN, END_TOKEN]:
-#             return 1
-#         return list_total_sim(self.raw_ev.values, self.transformed_ev.values)
-#
-#     def transform(self):
-#         return self.raw_ev.values[:]
+        # class Replace(Operation):
+        #     def __init__(self, raw_ev, transformed_ev):
+        #         super(Replace, self).__init__(raw_ev, transformed_ev)
+        #
+        #     @staticmethod
+        #     def check_condition(raw_ev, transformed_ev):
+        #         if transformed_ev == raw_ev:
+        #             return True
+        #         return False
+        #
+        #     def score_function(self):
+        #         if self.raw_ev.atomic in [START_TOKEN, END_TOKEN]:
+        #             return 1
+        #         return list_total_sim(self.raw_ev.values, self.transformed_ev.values)
+        #
+        #     def transform(self):
+        #         return self.raw_ev.values[:]
