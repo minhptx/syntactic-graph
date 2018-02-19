@@ -244,8 +244,8 @@ class Graph:
         atomic_pos_dict = Graph.atomic_profile(input_str)
         token_type_dict = Graph.token_type_segment(input_str)
 
-        graph.edge_map[(0,)][(1,)] = Edge([PatternToken(START_TOKEN, [1])])
-        graph.edge_map[(n - 1,)][(n,)] = Edge([PatternToken(END_TOKEN, [1])])
+        graph.edge_map[(0,)][(1,)] = Edge([PatternToken(START_TOKEN, [1], values=[""])])
+        graph.edge_map[(n - 1,)][(n,)] = Edge([PatternToken(END_TOKEN, [1], values=[""])])
 
         for atomic in ATOMIC_LIST:
             for i, j in atomic_pos_dict[atomic.name]:

@@ -27,10 +27,10 @@ class TransformationEvaluation:
         transformed_data_path = os.path.join(self.folder_path, "input", "transformed")
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
 
-        for file_name in sorted(os.listdir(raw_data_path))[:30]:
-            # for file_name in ["107.csv"]:
-            if file_name in ["116.csv"]:
-                continue
+        for file_name in sorted(os.listdir(raw_data_path))[:20]:
+        # for file_name in ["100.csv"]:
+        #     if file_name in ["116.csv", "120.csv", "170.csv"]:
+        #         continue
             start = time.time()
             #         continue
             print("File", file_name)
@@ -88,8 +88,8 @@ class TransformationEvaluation:
                 # print("Size", raw_model.clusters[idx_1].pattern_graph.values)
                 # print(result_list)
                 # print(raw_model.clusters[idx_1].values)
-                print(true_count, false_count)
-                print(result_list, min(cost_map[idx_1].items(), key=lambda x: x[1]))
+                # print(true_count, false_count)
+                # print(result_list, min(cost_map[idx_1].items(), key=lambda x: x[1]))
 
                 for idx, values in result_list.items():
                     value_str = "".join(values)
@@ -121,10 +121,10 @@ class TransformationEvaluation:
             accuracy_dict[file_name] = accuracy
             time_dict[file_name] = running_time
             print(accuracy)
-        print(accuracy_dict)
-        print(time_dict)
-        print(np.mean(list(accuracy_dict.values())))
-        print(np.mean(list(time_dict.values())))
+            print(accuracy_dict)
+            print(time_dict)
+            print(np.mean(list(accuracy_dict.values())))
+            print(np.mean(list(time_dict.values())))
 
         with open("result.csv", "w") as f:
             writer = csv.writer(f)

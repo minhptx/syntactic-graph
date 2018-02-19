@@ -39,7 +39,7 @@ class TransformationModel:
         for operation in operation_path:
             print(operation.raw_ev.values[:3], operation.transformed_ev.values[:3], operation,
                   operation.score_function(),
-                  operation.transform()[:3])
+                  operation.transform()[:3], len(operation.raw_ev.values))
             transformed_column_list.append(operation.transform())
 
         transformed_value_list = defaultdict(lambda: [])
