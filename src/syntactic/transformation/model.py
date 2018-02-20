@@ -27,7 +27,7 @@ class TransformationModel:
                                                   self.transformed_graph.end_node)
 
         if path is None:
-            return [], float("inf")
+            return {}, float("inf")
 
         operation_path = []
         for i in range(1, len(path)):
