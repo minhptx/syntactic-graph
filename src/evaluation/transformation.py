@@ -49,8 +49,10 @@ class TransformationEvaluation:
                 groundtruth_list = reader.readlines()
                 groundtruth_list = [x.strip() for x in groundtruth_list]
 
-                if groundtruth_list[0][0] == '"':
+                if groundtruth_list[0] and groundtruth_list[0][0] == '"':
                     groundtruth_list = [x.strip()[1:-1] for x in groundtruth_list]
+                else:
+                    groundtruth_list = groundtruth_list
 
             # try:
             raw_model = HierarchicalModel(raw_input_list)

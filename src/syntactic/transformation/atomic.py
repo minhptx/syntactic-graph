@@ -83,7 +83,7 @@ class Upper(Operation):
         return list_total_sim(value_list, self.transformed_ev.values)
 
     def transform(self):
-        return [x.toupper() for x in self.raw_ev.values]
+        return [x.upper() for x in self.raw_ev.values]
 
 
 class Lower(Operation):
