@@ -22,15 +22,17 @@ class TransformationEvaluation:
     def read_data(self):
         accuracy_dict = {}
         time_dict = {}
+        validation_dict = {}
 
         raw_data_path = os.path.join(self.folder_path, "input", 'raw')
         transformed_data_path = os.path.join(self.folder_path, "input", "transformed")
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
+        output_data_path = os.path.join("data/result")
 
-        for file_name in sorted(os.listdir(raw_data_path))[:20]:
-        # for file_name in ["100.csv"]:
-        #     if file_name in ["116.csv", "120.csv", "170.csv"]:
-        #         continue
+        for file_name in sorted(os.listdir(raw_data_path))[:10]:
+            # for file_name in ["100.csv"]:
+            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
+            #     continue
             start = time.time()
             #         continue
             print("File", file_name)
@@ -40,12 +42,13 @@ class TransformationEvaluation:
             raw_file_path = os.path.join(raw_data_path, file_name)
             transformed_file_path = os.path.join(transformed_data_path, file_name)
             groundtruth_file_path = os.path.join(groundtruth_data_path, file_name)
+            output_file_path = os.path.join(output_data_path, file_name)
 
             raw_input_list = pd.read_csv(raw_file_path, dtype=object, header=None).iloc[:, 0].fillna("").values.tolist()
-            transformed_list = pd.read_csv(transformed_file_path, dtype=object, header=None).iloc[:, 0].fillna(
-                "").values.tolist()
+            transformed_list = pd.read_csv(
+                transformed_file_path, dtype=object, header=None).iloc[:, 0].fillna("").values.tolist()
 
-            with open(groundtruth_file_path, "r") as reader:
+            with codecs.open(groundtruth_file_path, "r", encoding="utf-8") as reader:
                 groundtruth_list = reader.readlines()
                 groundtruth_list = [x.strip() for x in groundtruth_list]
 
@@ -68,6 +71,7 @@ class TransformationEvaluation:
 
             true_count = 0
             false_count = 0
+            validation_count = 0
 
             for idx_1, raw_cluster in enumerate(raw_model.clusters):
                 for idx_2, transformed_cluster in enumerate(transformed_model.clusters):
@@ -82,6 +86,8 @@ class TransformationEvaluation:
                                  raw_cluster.pattern_graph.num_edge()
                     result_map[idx_1][idx_2] = result_list
 
+            value_list = defaultdict(lambda: None)
+
             for idx_1 in result_map:
                 idx_2 = min(cost_map[idx_1].items(), key=lambda x: x[1])[0]
                 result_list = result_map[idx_1][idx_2]
@@ -91,8 +97,12 @@ class TransformationEvaluation:
                 # print(true_count, false_count)
                 # print(result_list, min(cost_map[idx_1].items(), key=lambda x: x[1]))
 
+                transformed_cluster = transformed_model.clusters[idx_2]
+
                 for idx, values in result_list.items():
                     value_str = "".join(values)
+
+                    is_validated = transformed_cluster.pattern_graph.is_matched(value_str)
 
                     # print("Length", len(raw_model.clusters[idx_1].pattern_graph.values), len(result_list))
                     # print(raw_model.clusters[idx_1].pattern_graph.values)
@@ -104,27 +114,46 @@ class TransformationEvaluation:
                     # print(groundtruth_list[raw_idx].strip())
                     # print(len(groundtruth_list), len(raw_input_list))
 
+                    value_list[raw_idx] = value_str
+
                     try:
                         groundtruth = groundtruth_list[raw_idx]
                         if value_str.strip() == groundtruth.strip():
+                            if is_validated:
+                                validation_count += 1
                             true_count += 1
                         else:
                             false_count += 1
+                            if not is_validated:
+                                validation_count += 1
                             print("False", value_str, groundtruth)
                     except Exception as e:
                         print(e)
+                        if not is_validated:
+                            validation_count += 1
                         false_count += 1
 
             running_time = time.time() - start
             accuracy = true_count * 1.0 / (false_count + true_count)
+            validate_accuracy = validation_count * 1.0 / (false_count + true_count)
 
             accuracy_dict[file_name] = accuracy
             time_dict[file_name] = running_time
+            validation_dict[file_name] = validation_count
             print(accuracy)
             print(accuracy_dict)
             print(time_dict)
+            print(validation_dict)
             print(np.mean(list(accuracy_dict.values())))
             print(np.mean(list(time_dict.values())))
+            print(np.mean(list(validation_dict.values())))
+
+            with open(output_file_path, "w") as writer:
+                for i in range(len(raw_input_list)):
+                    if i not in value_list:
+                        writer.write("\n")
+                    else:
+                        writer.write(value_list[i] + "\n")
 
         with open("result.csv", "w") as f:
             writer = csv.writer(f)
