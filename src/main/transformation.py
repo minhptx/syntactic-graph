@@ -29,8 +29,8 @@ class TransformationEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
         output_data_path = os.path.join("data/result")
 
-        for file_name in sorted(os.listdir(raw_data_path))[:10]:
-            # for file_name in ["100.csv"]:
+        for file_name in sorted(os.listdir(raw_data_path))[:50]:
+        # for file_name in ["1.csv"]:
             # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
             start = time.time()
@@ -110,30 +110,31 @@ class TransformationEvaluation:
                     # print(raw_model.clusters[idx_1].pattern_graph.values)
                     raw_str = raw_model.clusters[idx_1].pattern_graph.values[idx]
 
-                    raw_idx = raw_input_list.index(raw_str[1:-1])
+                    raw_indices = [i for i, val in enumerate(raw_input_list) if val == raw_str[1:-1]]
                     # print(value_str)
                     # print(raw_str)
                     # print(groundtruth_list[raw_idx].strip())
                     # print(len(groundtruth_list), len(raw_input_list))
 
-                    value_list[raw_idx] = value_str
+                    for raw_idx in raw_indices:
+                        value_list[raw_idx] = value_str
 
-                    try:
-                        groundtruth = groundtruth_list[raw_idx]
-                        if value_str.strip() == groundtruth.strip():
-                            if is_validated:
-                                validation_count += 1
-                            true_count += 1
-                        else:
-                            false_count += 1
+                        try:
+                            groundtruth = groundtruth_list[raw_idx]
+                            if value_str.strip() == groundtruth.strip():
+                                if is_validated:
+                                    validation_count += 1
+                                true_count += 1
+                            else:
+                                false_count += 1
+                                if not is_validated:
+                                    validation_count += 1
+                                print("False", value_str, groundtruth)
+                        except Exception as e:
+                            print(e)
                             if not is_validated:
                                 validation_count += 1
-                            print("False", value_str, groundtruth)
-                    except Exception as e:
-                        print(e)
-                        if not is_validated:
-                            validation_count += 1
-                        false_count += 1
+                            false_count += 1
 
             running_time = time.time() - start
             accuracy = true_count * 1.0 / (false_count + true_count)

@@ -42,7 +42,7 @@ class Validator:
         self.vectorizer = DictVectorizer()
         self.vectorizer.fit(self.vector_list)
         self.feature_matrix = self.vectorizer.transform(self.vector_list)
-        classifier = RandomForestClassifier()
+        classifier = RandomForestClassifier(class_weight="balanced")
         # print("Fitting")
         classifier.fit(self.feature_matrix, self.label_list)
         # print("Predicting")
@@ -105,8 +105,8 @@ class Validator:
         for text in position_dict:
             feature_vector["POS " + text] = position_dict[text]
 
-        for text in length_dict:
-            feature_vector["LENGTH " + text] = np.mean(length_dict[text])
+        # for text in length_dict:
+        #     feature_vector["LENGTH " + text] = np.mean(length_dict[text])
 
         # print(temp, feature_vector)
 
