@@ -1,11 +1,11 @@
 import codecs
 import csv
 import os
+import time
 from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-import time
 
 from syntactic.generation.model import HierarchicalModel
 from syntactic.transformation.model import TransformationModel
@@ -30,8 +30,8 @@ class TransformationEvaluation:
         output_data_path = os.path.join("data/result")
 
         for file_name in sorted(os.listdir(raw_data_path))[:10]:
-        # for file_name in [".csv"]:
-            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
+            # for file_name in [".csv"]:
+            # for file_name in ["1.csv"]:            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
             start = time.time()
             #         continue
@@ -110,13 +110,11 @@ class TransformationEvaluation:
                     # print(raw_model.clusters[idx_1].pattern_graph.values)
                     raw_str = raw_model.clusters[idx_1].pattern_graph.values[idx]
 
-                    # raw_idx = raw_input_list.index(raw_str[1:-1])
+                    raw_indices = [i for i, val in enumerate(raw_input_list) if val == raw_str[1:-1]]
                     # print(value_str)
                     # print(raw_str)
                     # print(groundtruth_list[raw_idx].strip())
                     # print(len(groundtruth_list), len(raw_input_list))
-
-                    raw_indices = [i for i, val in enumerate(raw_input_list) if val == raw_str[1:-1]]
 
                     for raw_idx in raw_indices:
 

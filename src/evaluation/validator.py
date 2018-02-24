@@ -1,11 +1,10 @@
 import codecs
-import regex as re
-import string
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import mpld3
 import numpy as np
+import regex as re
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction import DictVectorizer
@@ -105,8 +104,8 @@ class Validator:
         for text in position_dict:
             feature_vector["POS " + text] = position_dict[text]
 
-        for text in length_dict:
-            feature_vector["LENGTH " + text] = np.mean(length_dict[text])
+        # for text in length_dict:
+        #     feature_vector["LENGTH " + text] = np.mean(length_dict[text])
 
         # print(temp, feature_vector)
 

@@ -18,7 +18,8 @@ total_count_dict = defaultdict(lambda: 0)
 edit_distance_dict = defaultdict(lambda: 0)
 org_edit_distance_dict = defaultdict(lambda: 0)
 confidence_dict = defaultdict(lambda: 0)
-for file_name in sorted(os.listdir(output_datapath)):
+# for file_name in sorted(os.listdir(output_datapath)):
+for file_name in ["100.csv"]:
     output_file_path = os.path.join(output_datapath, file_name)
     desire_file_path = os.path.join(desire_datapath, file_name)
     groundtruth_file_path = os.path.join(groundtruth_datapath, file_name)
