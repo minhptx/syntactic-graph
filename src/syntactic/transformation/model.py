@@ -1,7 +1,7 @@
 import time
 from collections import defaultdict
 
-from syntactic.transformation.atomic import Lower, Upper, PartOf, SubStr, Constant, Replace
+from syntactic.transformation.atomic import Lower, Upper, Replace, SubStr, Constant, InvSubStr
 
 
 class TransformationModel:
@@ -134,7 +134,7 @@ class TransformationModel:
     @staticmethod
     def get_all_candidates(ev_1, ev_2):
         candidate_operations = []
-        for operation in [Lower, Upper, PartOf, Constant, SubStr, Replace]:
+        for operation in [Lower, Upper, Replace, Constant, SubStr, InvSubStr]:
             if operation.check_condition(ev_1, ev_2):
                 candidate_operations.append(operation(ev_1, ev_2))
         return candidate_operations

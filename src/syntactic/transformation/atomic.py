@@ -45,18 +45,17 @@ class Constant(Operation):
             return self.transformed_ev.values
 
 
-class PartOf(Operation):
+class Replace(Operation):
     def __init__(self, raw_ev, transformed_ev):
-        super(PartOf, self).__init__(raw_ev, transformed_ev)
+        super(Replace, self).__init__(raw_ev, transformed_ev)
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
         if raw_ev.atomic in [START_TOKEN, END_TOKEN] or transformed_ev.atomic in [START_TOKEN, END_TOKEN]:
             return False
-        if raw_ev.atomic != transformed_ev.atomic:
-            return False
-        if raw_ev.length <= transformed_ev.length:
+        if raw_ev.atomic == transformed_ev.atomic and raw_ev.length == transformed_ev.length:
             return True
+        return False
 
     def score_function(self):
         return list_total_sim(self.raw_ev.values, self.transformed_ev.values)
@@ -168,9 +167,9 @@ class SubStr(Operation):
         return [x[self.index:self.index + self.length] for x in self.raw_ev.values]
 
 
-class Replace(Operation):
+class InvSubStr(Operation):
     def __init__(self, raw_ev, transformed_ev):
-        super(Replace, self).__init__(raw_ev, transformed_ev)
+        super(InvSubStr, self).__init__(raw_ev, transformed_ev)
         self.score = 0
         self.index = -1
         self.length = transformed_ev.length - raw_ev.length
@@ -205,7 +204,7 @@ class Replace(Operation):
             self.index = list(score_dict.keys())[list(score_dict.values()).index(self.score)]
 
     def __str__(self):
-        return "Replace(%s, %s)" % (self.index, self.length)
+        return "InvSubStr(%s, %s)" % (self.index, self.length)
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
