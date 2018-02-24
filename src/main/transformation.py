@@ -16,7 +16,7 @@ class TransformationEvaluation:
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
         self.transformed_data_dict = defaultdict(lambda: [])
-        self.folder_path = "data/transformation"
+        self.folder_path = "data/noisy"
         self.name_list = []
 
     def read_data(self):
@@ -29,8 +29,8 @@ class TransformationEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
         output_data_path = os.path.join("data/result")
 
-        for file_name in sorted(os.listdir(raw_data_path))[:50]:
-        # for file_name in ["1.csv"]:
+        for file_name in sorted(os.listdir(raw_data_path))[:30]:
+        # for file_name in ["name1.csv"]:
             # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
             start = time.time()
@@ -57,6 +57,8 @@ class TransformationEvaluation:
                 else:
                     groundtruth_list = groundtruth_list
 
+
+
             # try:
             raw_model = HierarchicalModel(raw_input_list)
             raw_model.build_hierarchy()
@@ -77,7 +79,7 @@ class TransformationEvaluation:
 
             for idx_1, raw_cluster in enumerate(raw_model.clusters):
                 for idx_2, transformed_cluster in enumerate(transformed_model.clusters):
-                    print("Length", len(raw_cluster.values), len(transformed_cluster.values))
+                    # print("Length", len(raw_cluster.values), len(transformed_cluster.values))
                     transformation_model = TransformationModel(raw_cluster.pattern_graph,
                                                                transformed_cluster.pattern_graph)
 

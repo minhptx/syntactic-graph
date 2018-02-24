@@ -122,7 +122,7 @@ class HierarchicalModel:
                         break
                 else:
                     print(text)
-                print(len(remove_list), len(cluster.pattern_graph.values))
+                # print(len(remove_list), len(cluster.pattern_graph.values))
 
             uncovered_list = [x for x in uncovered_list if x not in set(remove_list)]
 

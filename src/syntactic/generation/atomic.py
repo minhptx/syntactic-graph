@@ -154,7 +154,7 @@ class LowerCaseWhitespace(Atomic):
 class AlphabetPunctuation(Atomic):
     def __init__(self):
         super(AlphabetPunctuation, self).__init__(
-            "AlphabetPunctuation", r"(\p{P}|\p{S}|\p{L}|\s)+", "ap")
+            "AlphabetPunctuation", r"(\p{P}|\p{S}|\p{L})+", "ap")
 
     def is_subset(self, atomic):
         if atomic in [ALPHA_PUNC]:
@@ -224,7 +224,7 @@ ANY = Any()
 TEXT = Text()
 
 ATOMIC_LIST = [PROPER_CASE, UPPER_CASE, LOWER_CASE, DIGIT, ALPHABET, ALPHANUM, WHITESPACE, PROPER_CASE_WS,
-               LOWER_CASE_WS, UPPER_CASE_WS, ALPHABET_WS, PUNCTUATION, ALPHA_PUNC]
+               LOWER_CASE_WS, UPPER_CASE_WS, ALPHABET_WS, PUNCTUATION]
 
 TOKEN_TYPES = [UPPER_CASE, LOWER_CASE, WHITESPACE, PUNCTUATION, DIGIT]
 

@@ -42,6 +42,7 @@ class TransformationModel:
                   operation.transform()[:3], len(operation.raw_ev.values))
             transformed_column_list.append(operation.transform())
 
+        print("End")
         transformed_value_list = defaultdict(lambda: [])
 
         for column in transformed_column_list:
@@ -79,7 +80,7 @@ class TransformationModel:
 
         topo_list = TransformationModel.topo_sort(start_node, sim_matrix)
 
-        print(topo_list, sim_matrix)
+        # print(topo_list, sim_matrix)
 
         while topo_list:
             current_node = topo_list.pop(0)
@@ -89,7 +90,7 @@ class TransformationModel:
                     distance_map[next_node] = distance_map[current_node] + sim_matrix[current_node][next_node]
                     previous_map[next_node] = current_node
 
-            # print("Topo", current_node)
+            print("Topo", current_node)
 
             # print("End")
         current_node = end_node
