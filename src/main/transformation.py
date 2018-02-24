@@ -1,11 +1,11 @@
 import codecs
 import csv
 import os
+import time
 from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-import time
 
 from syntactic.generation.model import HierarchicalModel
 from syntactic.transformation.model import TransformationModel
@@ -29,9 +29,9 @@ class TransformationEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
         output_data_path = os.path.join("data/result")
 
-        for file_name in sorted(os.listdir(raw_data_path))[:30]:
-        # for file_name in ["name1.csv"]:
-            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
+        for file_name in sorted(os.listdir(raw_data_path))[:10]:
+            # for file_name in [".csv"]:
+            # for file_name in ["1.csv"]:            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
             start = time.time()
             #         continue
@@ -119,6 +119,7 @@ class TransformationEvaluation:
                     # print(len(groundtruth_list), len(raw_input_list))
 
                     for raw_idx in raw_indices:
+
                         value_list[raw_idx] = value_str
 
                         try:

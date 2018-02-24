@@ -1,23 +1,23 @@
 import codecs
-import re
-import string
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import mpld3
 import numpy as np
+import regex as re
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction import DictVectorizer
 
 
 class Validator:
-    NUMWRD = r"[0-9]+"
-    LWRD = r"[A-Za-z]+"
+    NUMWRD = r"\p{N}+"
+    LWRD = r"\p{Ll}+"
+    UWRD = r"\p{Lu}+"
     # UWRD = r"[A-Z]+"
-    PUNC = "[%s]+" % (string.punctuation + "|")
-    SPACE = "\s+"
-    TOKEN_TYPES = {"NUM": NUMWRD, "LWD": LWRD, "PUN": PUNC, "SPACE": SPACE}
+    PUNC = "\p{P}"
+    SPACE = "\p{Z}+"
+    TOKEN_TYPES = {"NUM": NUMWRD, "LWD": LWRD, "PUN": PUNC, "SPACE": SPACE, "UWD": UWRD}
 
     def __init__(self, file_path_1, file_path_2):
         self.vector_list = []
@@ -42,7 +42,7 @@ class Validator:
         self.vectorizer = DictVectorizer()
         self.vectorizer.fit(self.vector_list)
         self.feature_matrix = self.vectorizer.transform(self.vector_list)
-        classifier = RandomForestClassifier(class_weight="balanced")
+        classifier = RandomForestClassifier(class_weight="balanced_subsample")
         # print("Fitting")
         classifier.fit(self.feature_matrix, self.label_list)
         # print("Predicting")
@@ -85,7 +85,6 @@ class Validator:
         return feature_vector
 
     def extract_feature(self, value):
-        temp = value
         position_dict = defaultdict(lambda: [])
         length_dict = defaultdict(lambda: [])
         index = 0
