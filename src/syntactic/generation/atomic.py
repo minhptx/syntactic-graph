@@ -154,7 +154,7 @@ class LowerCaseWhitespace(Atomic):
 class AlphabetPunctuation(Atomic):
     def __init__(self):
         super(AlphabetPunctuation, self).__init__(
-            "AlphabetPunctuation", r"(\p{P}|\p{S}|\p{L}|\s)+", "ap")
+            "AlphabetPunctuation", r"(\p{P}|\p{S}|\p{L})+", "ap")
 
     def is_subset(self, atomic):
         if atomic in [ALPHA_PUNC]:

@@ -57,6 +57,8 @@ class TransformationEvaluation:
                 else:
                     groundtruth_list = groundtruth_list
 
+
+
             # try:
             raw_model = HierarchicalModel(raw_input_list)
             raw_model.build_hierarchy()
@@ -77,7 +79,7 @@ class TransformationEvaluation:
 
             for idx_1, raw_cluster in enumerate(raw_model.clusters):
                 for idx_2, transformed_cluster in enumerate(transformed_model.clusters):
-                    print("Length", len(raw_cluster.values), len(transformed_cluster.values))
+                    # print("Length", len(raw_cluster.values), len(transformed_cluster.values))
                     transformation_model = TransformationModel(raw_cluster.pattern_graph,
                                                                transformed_cluster.pattern_graph)
 
