@@ -79,8 +79,6 @@ class TransformationModel:
 
         topo_list = TransformationModel.topo_sort(start_node, sim_matrix)
 
-        print(topo_list, sim_matrix)
-
         while topo_list:
             current_node = topo_list.pop(0)
 
@@ -95,7 +93,6 @@ class TransformationModel:
         current_node = end_node
 
         path = [end_node]
-        print(end_node)
         print(previous_map)
 
         while current_node != start_node:
@@ -126,7 +123,7 @@ class TransformationModel:
 
                                 for candidate in candidates:
                                     score = candidate.score_function()
-                                    print(ev_1.values[:3], ev_2.values[:3], candidate, score)
+                                    print(ev_1.values[:3], ev_2.values[:3], candidate, ev_1.atomic, ev_2.atomic, score)
                                     candidate_map[(start_node_2, end_node_2)].append((score, candidate))
 
         return candidate_map

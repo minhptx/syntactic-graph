@@ -7,10 +7,11 @@ from utils.string import lcs
 
 
 class PatternToken:
-    def __init__(self, atomic, nth, length=-1, neighbor=None, values=None):
+    def __init__(self, atomic, nth, min_length=-1, max_length=-1, neighbor=None, values=None):
         self.atomic = atomic
         self.nth = nth
-        self.length = length
+        self.min_length = min_length
+        self.max_length = max_length
         self.neighbor = neighbor
         if values:
             self.values = values
@@ -18,21 +19,31 @@ class PatternToken:
             self.values = []
 
     def __eq__(self, ev):
+        return self.atomic == ev.atomic and self.min_length == ev.min_length \
+               and self.max_length == ev.max_length and self.neighbor == ev.neighbor
+
+    def intersect(self, ev):
         nth = set(self.nth).intersection(ev.nth)
         if nth:
-            return self.atomic == ev.atomic and self.length == ev.length and self.neighbor == ev.neighbor
-        return None
+            return self.atomic == ev.atomic and self.neighbor == ev.neighbor
+        return False
 
     def is_subset(self, ev):
-        if self.atomic.is_subset(ev.atomic) or self.atomic == ev.atomic:
-            if self.nth == ev.nth and ev.length == -1:
-                return True
+        if self.atomic == ev.atomic:
+            if self.nth == ev.nth:
+                if ev.min_length == self.min_length and ev.max_length == self.max_length:
+                    return True
         return False
 
     def join(self, ev):
-        if self == ev:
+        if self.intersect(ev):
             nth = set(self.nth).intersection(ev.nth)
-            return PatternToken(self.atomic, nth, self.length, self.neighbor, values=self.values + ev.values)
+            range_length = sorted(
+                set(range(self.min_length, self.max_length + 1)).union(set(range(ev.min_length, ev.max_length + 1))))
+            print(range_length)
+            min_length = range_length[0]
+            max_length = range_length[-1]
+            return PatternToken(self.atomic, nth, min_length, max_length, self.neighbor, values=self.values + ev.values)
         return None
 
 
@@ -74,55 +85,23 @@ class Graph:
         return count
 
     def simplify(self):
-        graph = Graph(self.values[:])
         for start_node in self.edge_map:
             for end_node in self.edge_map[start_node]:
                 edge = self.edge_map[start_node][end_node]
                 minimal_list = edge.value_list[:]
                 for ev_1 in edge.value_list:
                     for ev_2 in edge.value_list:
+                        if ev_1 == ev_2:
+                            continue
                         if ev_2 not in minimal_list:
                             continue
                         if ev_1.is_subset(ev_2):
                             minimal_list.remove(ev_2)
 
-                graph.edge_map[start_node][end_node] = Edge(minimal_list)
-        return graph
+                self.edge_map[start_node][end_node] = Edge(minimal_list)
+        return self
 
-    def to_paths(self):
-        paths = []
-        start_node = tuple([0] * len(self.values))
-
-        visited = []
-
-        self.traverse(start_node, [], paths, visited)
-
-        edge_paths = []
-
-        for path in paths:
-            edge_path = []
-            for idx in range(1, len(path)):
-                edge_path.append(self.edge_map[path[idx - 1]][path[idx]])
-
-            edge_paths.append(edge_path)
-
-        return edge_paths
-
-    def traverse(self, current_node, path, paths, visited):
-        path.append(current_node)
-        visited.append(current_node)
-
-        for end_node in self.edge_map[current_node]:
-            if self.edge_map[current_node][end_node]:
-                paths.append(path + [end_node])
-            else:
-                self.traverse(end_node, path, paths, visited)
-
-        visited.remove(current_node)
-        path.remove(current_node)
-
-    def intersect(self, other_graph):
-        # print(self, other_graph)
+    def join(self, other_graph):
         graph = Graph(self.values + other_graph.values)
 
         graph.start_node = self.start_node + other_graph.start_node
@@ -134,7 +113,6 @@ class Graph:
 
         while queue:
             node_1, node_2 = queue.pop()
-            # print(node_1, node_2)
             visited.append((node_1, node_2))
 
             for name_1_2 in self.edge_map[node_1]:
@@ -148,7 +126,6 @@ class Graph:
                     if not edge_2:
                         continue
 
-                    # print(edge_1, edge_2)
                     edge = edge_1.join(edge_2)
                     if edge:
                         graph.edge_map[node_1 + node_2][name_1_2 + name_2_2] = edge
@@ -163,7 +140,7 @@ class Graph:
             return None
         return graph
 
-    def is_matched(self, input_str, is_add=True):
+    def match_and_join(self, input_str):
 
         stack = [(self.start_node, input_str)]
         visited = []
@@ -172,7 +149,6 @@ class Graph:
         is_passable = False
         while stack:
             current_node, current_str = stack.pop(0)
-            # print(current_node, current_str)
 
             if current_node in visited:
                 continue
@@ -187,13 +163,11 @@ class Graph:
                         is_passable = True
 
                     match = re.match(edge_value.atomic.regex, current_str)
-                    # print(len(edge_value.values), edge_value.atomic.regex, current_str, match)
                     if match and match.start() == 0:
                         if (end_node, current_str[len(match.group()):]) not in stack:
                             stack.append((end_node, current_str[len(match.group()):]))
 
-                        if is_add:
-                            add_list[(current_node, end_node)][idx] = match.group()
+                        add_list[(current_node, end_node)][idx] = match.group()
 
         if is_passable:
             for start_node, end_node in add_list:
@@ -255,9 +229,11 @@ class Graph:
                 left_index = atomic_pos_dict[atomic.name].index((i, j))
                 right_index = len(atomic_pos_dict[atomic.name]) - left_index
                 graph.edge_map[(i,)][(j,)].add_edge_value(
-                    PatternToken(atomic, [left_index + 1, -right_index], values=[sub_str]))  # variable-length
+                    PatternToken(atomic, [left_index + 1, -right_index], j - i, j - i,
+                                 values=[sub_str]))  # variable-length
                 graph.edge_map[(i,)][(j,)].add_edge_value(
-                    PatternToken(atomic, [left_index + 1, -right_index], j - i, values=[sub_str]))  # fixed-length
+                    PatternToken(atomic, [left_index + 1, -right_index], j - i, j - i,
+                                 values=[sub_str]))  # fixed-length
 
                 # graph.edge_map[(j,)][(n - 1,)].add_edge_value(
                 #     EdgeValue(TEXT, -1, neighbor=atomic, values=[sub_str]))  # fixed-length
@@ -268,16 +244,13 @@ class Graph:
             for i, j in token_type_dict[atomic.name]:
                 if i == 0 or j == n:
                     continue
-                # if j - i >= 4:
-                #     continue
+
                 sub_str = input_str[i:j]
-                # if not Graph.token_type_segment(sub_str):
-                #     continue
 
                 left_index = token_type_dict[atomic.name].index((i, j))
                 right_index = len(token_type_dict[atomic.name]) - left_index
                 constant = ConstantString(sub_str)
-                graph.edge_map[(i,)][(j,)].add_edge_value(PatternToken(constant, [left_index + 1, -right_index],
+                graph.edge_map[(i,)][(j,)].add_edge_value(PatternToken(constant, [left_index + 1, -right_index], j - i,
                                                                        values=[sub_str]))  # variable-length
 
                 # graph.edge_map[(j,)][(n - 1,)].add_edge_value(

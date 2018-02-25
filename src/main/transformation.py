@@ -29,8 +29,8 @@ class TransformationEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
         output_data_path = os.path.join("data/result")
 
-        for file_name in sorted(os.listdir(raw_data_path))[:10]:
-            # for file_name in [".csv"]:
+        # for file_name in sorted(os.listdir(raw_data_path))[:10]:
+        for file_name in ["bd1.csv"]:
             # for file_name in ["1.csv"]:            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
             start = time.time()
@@ -104,7 +104,7 @@ class TransformationEvaluation:
                 for idx, values in result_list.items():
                     value_str = "".join(values)
 
-                    is_validated = transformed_cluster.pattern_graph.is_matched(value_str)
+                    is_validated = transformed_cluster.pattern_graph.match_and_join(value_str)
 
                     # print("Length", len(raw_model.clusters[idx_1].pattern_graph.values), len(result_list))
                     # print(raw_model.clusters[idx_1].pattern_graph.values)

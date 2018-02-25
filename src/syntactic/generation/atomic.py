@@ -18,7 +18,7 @@ class Atomic(object):
 
 class ProperCase(Atomic):
     def __init__(self):
-        super(ProperCase, self).__init__("ProperCase", r"\p{Lt}+", "Pp")
+        super(ProperCase, self).__init__("ProperCase", r"\p{Lu}\p{Ll}+", "Pp")
 
     def is_subset(self, atomic):
         if atomic in [ALPHABET, ALPHANUM, ALPHABET_WS, PROPER_CASE_WS]:
@@ -118,7 +118,7 @@ class EndToken(Atomic):
 class ProperCaseWhitespace(Atomic):
     def __init__(self):
         super(ProperCaseWhitespace, self).__init__(
-            "ProperCaseWhitespace", r"\p{Lt}+(\p{Z}+\p{L}+)*", "ps")
+            "ProperCaseWhitespace", r"\p{Lu}\p{Ll}+(\p{Z}+\p{Lu}\p{Ll}+)*", "ps")
 
     def is_subset(self, atomic):
         if atomic in [ALPHABET_WS]:
@@ -224,7 +224,7 @@ ANY = Any()
 TEXT = Text()
 
 ATOMIC_LIST = [PROPER_CASE, UPPER_CASE, LOWER_CASE, DIGIT, ALPHABET, ALPHANUM, WHITESPACE, PROPER_CASE_WS,
-               LOWER_CASE_WS, UPPER_CASE_WS, ALPHABET_WS, PUNCTUATION, ALPHA_PUNC]
+               LOWER_CASE_WS, UPPER_CASE_WS, ALPHABET_WS, PUNCTUATION]
 
 TOKEN_TYPES = [UPPER_CASE, LOWER_CASE, WHITESPACE, PUNCTUATION, DIGIT]
 

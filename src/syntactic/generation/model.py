@@ -14,7 +14,7 @@ class Cluster:
         self.pattern_graph = pattern_graph
 
     def is_matched(self, text):
-        return self.pattern_graph.is_matched(text, is_add=True)
+        return self.pattern_graph.match_and_join(text, is_add=True)
 
     def add_value(self, text):
         self.values.append(text)
@@ -31,7 +31,7 @@ class Cluster:
         else:
             return Cluster([seed], seed_graph), []
         min_sim_graph = Graph.generate(min_sim_sample)
-        cluster_graph = seed_graph.intersect(min_sim_graph)
+        cluster_graph = seed_graph.join(min_sim_graph)
 
         cluster_value_list.remove(min_sim_sample)
 
@@ -39,11 +39,11 @@ class Cluster:
 
         for cluster_text in cluster_value_list:
             # print(cluster_text)
-            if cluster_graph.is_matched(cluster_text, is_add=True):
+            if cluster_graph.match_and_join(cluster_text, is_add=True):
                 cluster_graph.values.append("^" + cluster_text + "$")
             else:
                 graph = Graph.generate(cluster_text)
-                result = cluster_graph.intersect(graph)
+                result = cluster_graph.join(graph)
                 if result is None:
                     no_fit_list.append(cluster_text)
 
@@ -112,11 +112,9 @@ class HierarchicalModel:
 
             remove_list = []
 
-            print(len(uncovered_list))
-
             for text in uncovered_list:
                 for cluster in self.clusters:
-                    if cluster.is_matched(text):
+                    if cluster.match_and_join(text):
                         cluster.add_value(text)
                         remove_list.append(text)
                         break
@@ -126,7 +124,8 @@ class HierarchicalModel:
 
             uncovered_list = [x for x in uncovered_list if x not in set(remove_list)]
 
-            print("Len uncovered", len(uncovered_list))
+        for cluster in self.clusters:
+            cluster.pattern_graph = cluster.pattern_graph.simplify()
 
     def seed_cluster(self, text_list):
         min_sim_list = [-2, -1]
@@ -160,7 +159,7 @@ class HierarchicalModel:
 
             graph_2 = Graph.generate(text_2)
 
-            graph = graph_1.intersect(graph_2)
+            graph = graph_1.join(graph_2)
 
             if is_cached:
                 self.intersection_map[text_1][text_2] = graph
@@ -232,5 +231,5 @@ if __name__ == "__main__":
     graph_2 = Graph.generate(u'Undetermined')
     graph_3 = Graph.generate(u"Male")
 
-    graph = graph_1.intersect(graph_2)
-    graph = graph.intersect(graph_3)
+    graph = graph_1.join(graph_2)
+    graph = graph.join(graph_3)
