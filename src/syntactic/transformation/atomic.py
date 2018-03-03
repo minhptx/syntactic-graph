@@ -53,7 +53,7 @@ class Replace(Operation):
     def check_condition(raw_ev, transformed_ev):
         if raw_ev.atomic in [START_TOKEN, END_TOKEN] or transformed_ev.atomic in [START_TOKEN, END_TOKEN]:
             return False
-        if raw_ev.atomic == transformed_ev.atomic and raw_ev.length == transformed_ev.length:
+        if raw_ev.atomic == transformed_ev.atomic and raw_ev.min == transformed_ev.length:
             return True
         return False
 

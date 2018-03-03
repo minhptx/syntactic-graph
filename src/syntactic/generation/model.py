@@ -13,8 +13,8 @@ class Cluster:
 
         self.pattern_graph = pattern_graph
 
-    def is_matched(self, text):
-        return self.pattern_graph.match_and_join(text, is_add=True)
+    def match_and_join(self, text):
+        return self.pattern_graph.match_and_join(text)
 
     def add_value(self, text):
         self.values.append(text)
@@ -39,7 +39,7 @@ class Cluster:
 
         for cluster_text in cluster_value_list:
             # print(cluster_text)
-            if cluster_graph.match_and_join(cluster_text, is_add=True):
+            if cluster_graph.match_and_join(cluster_text):
                 cluster_graph.values.append("^" + cluster_text + "$")
             else:
                 graph = Graph.generate(cluster_text)
