@@ -21,7 +21,7 @@ class ValidationEvaluation:
 
     @staticmethod
     def similarity(graph_1, graph_2):
-        graph = graph_1.intersect(graph_2)
+        graph = graph_1.is_position_fit(graph_2)
 
         if not graph:
             # print("No graph")

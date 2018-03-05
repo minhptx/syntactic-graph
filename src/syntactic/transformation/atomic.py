@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 from syntactic.generation.atomic import *
-from utils.string import list_total_sim
 
 
 class Operation(object):
@@ -10,8 +9,9 @@ class Operation(object):
         self.transformed_ev = transformed_ev
         self.score = 0
 
-    def score_function(self):
-        return 0
+    def score_function(self, model):
+        transformed_data = self.transform()
+        return model.get_sim(transformed_data, self.transformed_ev.values)
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
@@ -35,7 +35,7 @@ class Constant(Operation):
         else:
             return False
 
-    def score_function(self):
+    def score_function(self, model):
         return 1
 
     def transform(self):
@@ -53,12 +53,10 @@ class Replace(Operation):
     def check_condition(raw_ev, transformed_ev):
         if raw_ev.atomic in [START_TOKEN, END_TOKEN] or transformed_ev.atomic in [START_TOKEN, END_TOKEN]:
             return False
-        if raw_ev.atomic == transformed_ev.atomic and raw_ev.min == transformed_ev.length:
-            return True
+        if raw_ev.atomic == transformed_ev.atomic:
+            if raw_ev.is_length_fit(transformed_ev):
+                return True
         return False
-
-    def score_function(self):
-        return list_total_sim(self.raw_ev.values, self.transformed_ev.values)
 
     def transform(self):
         return self.raw_ev.values[:]
@@ -77,10 +75,6 @@ class Upper(Operation):
                 return True
         return False
 
-    def score_function(self):
-        value_list = [x.upper() for x in self.raw_ev.values]
-        return list_total_sim(value_list, self.transformed_ev.values)
-
     def transform(self):
         return [x.upper() for x in self.raw_ev.values]
 
@@ -94,13 +88,9 @@ class Lower(Operation):
         if transformed_ev.atomic in [LOWER_CASE, LOWER_CASE_WS] and raw_ev.atomic in [UPPER_CASE, ALPHABET, PROPER_CASE,
                                                                                       UPPER_CASE_WS, ALPHABET_WS,
                                                                                       PROPER_CASE_WS]:
-            if transformed_ev.length == raw_ev.length:
+            if raw_ev.is_length_fit(transformed_ev):
                 return True
         return False
-
-    def score_function(self):
-        value_list = [x.lower() for x in self.raw_ev.values]
-        return list_total_sim(value_list, self.transformed_ev.values)
 
     def transform(self):
         return [x.lower() for x in self.raw_ev.values]
@@ -110,29 +100,27 @@ class SubStr(Operation):
     def __init__(self, raw_ev, transformed_ev):
         super(SubStr, self).__init__(raw_ev, transformed_ev)
         self.score = 0
-        self.index = -1
-        self.length = transformed_ev.length
-        self.get_best_range()
+        self.start_index = -1
+        self.end_index = -1
+        self.min_length = raw_ev.min_length
 
-    def get_best_range(self):
-        length = self.transformed_ev.length
+    def get_best_range(self, model):
+        length = self.transformed_ev.min_length
         # print("Value list", self.raw_ev.values)
         # print("Value list", self.transformed_ev.values)
 
-        min_length = min([len(x) for x in self.raw_ev.values])
-
         score_dict = defaultdict(lambda: 0)
 
-        for i in range(min_length - length + 1):
+        for i in range(self.min_length - length + 1):
             value_list = []
             for value in self.raw_ev.values:
                 value_list.append(value[i: i + length])
-            score_dict[i] = self.score_range(value_list)
+            score_dict[i] = self.score_range(value_list, model)
 
             value_list = []
             for value in self.raw_ev.values:
                 value_list.append(value[i: i + length])
-            score_dict[-i] = self.score_range(value_list)
+            score_dict[-i] = self.score_range(value_list, model)
 
         # print(score_dict, min_length, length)
         if score_dict:
@@ -140,60 +128,62 @@ class SubStr(Operation):
         else:
             self.score = 0
         if self.score:
-            self.index = list(score_dict.keys())[list(score_dict.values()).index(self.score)]
+            self.start_index = list(score_dict.keys())[list(score_dict.values()).index(self.score)]
+            self.end_index = self.start_index + length
 
     def __str__(self):
-        return "SubString(%s, %s)" % (self.index, self.length)
+        return "SubString(%s, %s)" % (self.start_index, self.end_index)
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
+        if transformed_ev.min_length != transformed_ev.max_length:
+            return False
         if raw_ev.atomic in [START_TOKEN, END_TOKEN] or transformed_ev.atomic in [START_TOKEN, END_TOKEN]:
             return False
-        if raw_ev.atomic != transformed_ev.atomic or transformed_ev.length == -1:
+        if raw_ev.atomic != transformed_ev.atomic or transformed_ev.max_length > raw_ev.max_length \
+                or transformed_ev.min_length > raw_ev.min_length:
             return False
-        if raw_ev.length >= transformed_ev.length:
+        if raw_ev.min_length >= transformed_ev.max_length:
             return True
         return False
 
-    def score_function(self):
+    def score_function(self, model):
         if self.score == -1:
-            self.get_best_range()
+            self.get_best_range(model)
         return self.score
 
-    def score_range(self, value_list):
-        return list_total_sim(value_list, self.transformed_ev.values)
+    def score_range(self, value_list, model):
+        return model.get_sim(value_list, self.transformed_ev.values)
 
     def transform(self):
-        return [x[self.index:self.index + self.length] for x in self.raw_ev.values]
+        return [x[self.start_index:self.end_index] for x in self.raw_ev.values]
 
 
 class InvSubStr(Operation):
     def __init__(self, raw_ev, transformed_ev):
         super(InvSubStr, self).__init__(raw_ev, transformed_ev)
         self.score = 0
-        self.index = -1
-        self.length = transformed_ev.length - raw_ev.length
-        self.get_best_range()
+        self.start_index = -1
+        self.end_index = -1
+        self.min_length = transformed_ev.min_length
 
-    def get_best_range(self):
-        length = self.raw_ev.length
+    def get_best_range(self, model):
+        length = self.raw_ev.min_length
         # print("Value list", self.raw_ev.values)
         # print("Value list", self.transformed_ev.values)
 
-        min_length = min([len(x) for x in self.transformed_ev.values])
-
         score_dict = defaultdict(lambda: 0)
 
-        for i in range(min_length - length + 1):
+        for i in range(self.min_length - length + 1):
             value_list = []
             for value in self.transformed_ev.values:
                 value_list.append(value[i: i + length])
-            score_dict[i] = self.score_range(value_list)
+            score_dict[i] = self.score_range(value_list, model)
 
             value_list = []
             for value in self.transformed_ev.values:
                 value_list.append(value[i: i + length])
-            score_dict[-i] = self.score_range(value_list)
+            score_dict[-i] = self.score_range(value_list, model)
 
         # print(score_dict, min_length, length)
         if score_dict:
@@ -201,46 +191,35 @@ class InvSubStr(Operation):
         else:
             self.score = 0
         if self.score:
-            self.index = list(score_dict.keys())[list(score_dict.values()).index(self.score)]
+            self.start_index = list(score_dict.keys())[list(score_dict.values()).index(self.score)]
+            self.end_index = self.start_index + length
 
     def __str__(self):
-        return "InvSubStr(%s, %s)" % (self.index, self.length)
+        return "InvSubStr(%s, %s)" % (self.start_index, self.end_index)
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
+        if raw_ev.min_length != raw_ev.max_length:
+            return False
         if transformed_ev.atomic in [START_TOKEN, END_TOKEN] or raw_ev.atomic in [START_TOKEN, END_TOKEN]:
             return False
-        if raw_ev.atomic != transformed_ev.atomic or raw_ev.length == -1:
+        if raw_ev.atomic != transformed_ev.atomic or transformed_ev.max_length > raw_ev.max_length \
+                or transformed_ev.min_length > raw_ev.min_length:
             return False
-        if transformed_ev.length >= raw_ev.length:
+        if transformed_ev.min_length >= raw_ev.max_length:
             return True
         return False
 
-    def score_function(self):
+    def score_function(self, model):
         if self.score == -1:
-            self.get_best_range()
+            self.get_best_range(model)
         return self.score
 
-    def score_range(self, value_list):
-        return list_total_sim(value_list, self.raw_ev.values)
+    def score_range(self, value_list, model):
+        return model.get_sim(value_list, self.raw_ev.values)
 
     def transform(self):
-        return [self.transformed_ev.values[0][:self.index] + x + self.transformed_ev.values[0][self.index + self.length:] for x in self.raw_ev.values]
-
-        # class Replace(Operation):
-        #     def __init__(self, raw_ev, transformed_ev):
-        #         super(Replace, self).__init__(raw_ev, transformed_ev)
-        #
-        #     @staticmethod
-        #     def check_condition(raw_ev, transformed_ev):
-        #         if transformed_ev == raw_ev:
-        #             return True
-        #         return False
-        #
-        #     def score_function(self):
-        #         if self.raw_ev.atomic in [START_TOKEN, END_TOKEN]:
-        #             return 1
-        #         return list_total_sim(self.raw_ev.values, self.transformed_ev.values)
-        #
-        #     def transform(self):
-        #         return self.raw_ev.values[:]
+        return [
+            self.transformed_ev.values[0][:self.start_index] + x + self.transformed_ev.values[0][
+                                                                   self.start_index + self.length:]
+            for x in self.raw_ev.values]
