@@ -11,7 +11,7 @@ class PatternToken:
         self.atomic = atomic
         self.nth = nth
         self.min_length = min_length
-        self.max_length = max_length
+        self.max_length = max_length + 1
         self.neighbor = neighbor
         if values:
             self.values = values
@@ -46,8 +46,8 @@ class PatternToken:
         if self.is_position_fit(ev):
             nth = set(self.nth).intersection(ev.nth)
             range_length = sorted(
-                set(range(self.min_length, self.max_length + 1)).union(set(range(ev.min_length, ev.max_length + 1))))
-            print("Range", self.min_length, self.max_length, ev.min_length, ev.max_length, range_length)
+                set(range(self.min_length, self.max_length)).union(set(range(ev.min_length, ev.max_length))))
+            # print("Range", self.min_length, self.max_length, ev.min_length, ev.max_length, range_length)
             min_length = range_length[0]
             max_length = range_length[-1]
             return PatternToken(self.atomic, nth, min_length, max_length, self.neighbor, values=self.values + ev.values)
@@ -68,7 +68,7 @@ class Edge:
         matched_list = []
         for ev_1 in self.values:
             for ev_2 in edge.values:
-                if ev_1 == ev_2:
+                if ev_1.is_position_fit(ev_2):
                     if ev_1 not in matched_list:
                         ev = ev_1.join(ev_2)
                         matched_list.append(ev)

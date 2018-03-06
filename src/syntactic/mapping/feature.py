@@ -1,9 +1,9 @@
 import random
 from collections import Counter
 
-import numpy as np
 from scipy.stats import ks_2samp
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import normalized_mutual_info_score
 from sklearn.metrics.pairwise import cosine_similarity
 
 from utils import nlp
@@ -27,11 +27,10 @@ def tfidf_cosine(list_1, list_2):
 
 
 def ks(string_list1, string_list2):
-    hist_1 = sorted(list(Counter([x for x in string_list1 if x]).values()))
-    hist_2 = sorted(list(Counter([x for x in string_list2 if x]).values()))
-    if not hist_1 or not hist_2:
-        return 0
-    return ks_2samp(hist_1, hist_2)[1]
+    min_length = min(len(string_list1), len(string_list2))
+    string_list1 = string_list1[:min_length]
+    string_list2 = string_list2[:min_length]
+    return normalized_mutual_info_score(string_list1, string_list2)
 
 
 def w2v_cosine(list_1, list_2):

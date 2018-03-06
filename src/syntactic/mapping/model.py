@@ -30,7 +30,7 @@ class MappingModel:
 
     def get_sim(self, list_1, list_2):
         feature_vector = self.create_feature_vector(list_1, list_2)
-        return self.predict_proba([feature_vector])[0][0]
+        return self.predict_proba([feature_vector])[0][1]
 
     def predict(self, test_data):
         return self.model.predict(test_data)
@@ -51,14 +51,20 @@ class MappingModel:
 
         for name_1 in edge_data_dict:
             for name_2 in edge_data_dict:
-                sample_1 = np.random.choice(edge_data_dict[name_1], 100)
-                sample_2 = np.random.choice(edge_data_dict[name_2], 100)
-
-                feature_vector = self.create_feature_vector(sample_1, sample_2)
-                train_data.append(feature_vector)
                 if name_1 == name_2:
-                    train_labels.append(1)
+                    for i in range(5):
+                        sample_1 = np.random.choice(edge_data_dict[name_1], len(edge_data_dict[name_1]) // 5).tolist()
+                        sample_2 = np.random.choice(edge_data_dict[name_2], len(edge_data_dict[name_1]) // 5).tolist()
+
+                        feature_vector = self.create_feature_vector(sample_1, sample_2)
+                        train_data.append(feature_vector)
+
+                        train_labels.append(1)
                 else:
+                    sample_1 = np.random.choice(edge_data_dict[name_1], len(edge_data_dict[name_1]) // 2).tolist()
+                    sample_2 = np.random.choice(edge_data_dict[name_2], len(edge_data_dict[name_1]) // 2).tolist()
+                    feature_vector = self.create_feature_vector(sample_1, sample_2)
+                    train_data.append(feature_vector)
                     train_labels.append(0)
 
         return train_data, train_labels

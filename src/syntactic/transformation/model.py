@@ -14,6 +14,8 @@ class TransformationModel:
         self.model.train_from_graph([self.raw_graph])
 
     def generate_program(self):
+        print("Raw value", self.raw_graph.values)
+        print("Transformed value", self.transformed_graph.values)
 
         best_operations = defaultdict(lambda: defaultdict(lambda: None))
         sim_map = defaultdict(lambda: defaultdict(lambda: -1))
