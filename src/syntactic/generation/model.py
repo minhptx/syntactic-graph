@@ -13,12 +13,8 @@ class Cluster:
 
         self.pattern_graph = pattern_graph
 
-    def match_and_join(self, text):
-        return self.pattern_graph.match_and_join(text)
-
     def add_value(self, text):
         self.values.append(text)
-        self.pattern_graph.values.append("^" + text + "$")
 
     @staticmethod
     def generate(seed, cluster_value_list, sim_map):
@@ -39,15 +35,18 @@ class Cluster:
 
         for cluster_text in cluster_value_list:
             # print(cluster_text)
-            if cluster_graph.match_and_join(cluster_text):
-                cluster_graph.values.append("^" + cluster_text + "$")
+            result = cluster_graph.join_from_text(cluster_text)
+            if result:
+                cluster_graph = result
             else:
                 graph = Graph.generate(cluster_text)
                 result = cluster_graph.join(graph)
-                if result is None:
+                if result:
+                    cluster_graph = result
+                else:
                     no_fit_list.append(cluster_text)
 
-        return Cluster(cluster_value_list + [seed, min_sim_sample], cluster_graph), no_fit_list
+        return Cluster(cluster_graph.values, cluster_graph), no_fit_list
 
 
 class HierarchicalModel:
@@ -112,9 +111,13 @@ class HierarchicalModel:
 
             remove_list = []
 
+            print("uncover", len(uncovered_list))
+
             for text in uncovered_list:
                 for cluster in self.clusters:
-                    if cluster.match_and_join(text):
+                    result = cluster.pattern_graph.join_from_text(text)
+                    if result:
+                        cluster.pattern_graph = result
                         cluster.add_value(text)
                         remove_list.append(text)
                         break

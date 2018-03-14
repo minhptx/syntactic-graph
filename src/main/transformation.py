@@ -16,7 +16,7 @@ class TransformationEvaluation:
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
         self.transformed_data_dict = defaultdict(lambda: [])
-        self.folder_path = "data/noisy"
+        self.folder_path = "data/transformation"
         self.name_list = []
 
     def read_data(self):
@@ -29,8 +29,8 @@ class TransformationEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
         output_data_path = os.path.join("data/result")
 
-        # for file_name in sorted(os.listdir(raw_data_path))[:5]:
-        for file_name in ["bd2.csv"]:
+        for file_name in sorted(os.listdir(raw_data_path))[:150]:
+        # for file_name in ["bd2.csv"]:
             # for file_name in ["1.csv"]:            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
             start = time.time()
@@ -57,9 +57,13 @@ class TransformationEvaluation:
                 else:
                     groundtruth_list = groundtruth_list
 
-
-
             # try:
+
+
+            raw_input_list = raw_input_list[:1000]
+            transformed_list = transformed_list[:1000]
+            groundtruth_list = groundtruth_list[:1000]
+
             raw_model = HierarchicalModel(raw_input_list)
             raw_model.build_hierarchy()
 
@@ -95,21 +99,14 @@ class TransformationEvaluation:
             for idx_1 in result_map:
                 idx_2 = min(cost_map[idx_1].items(), key=lambda x: x[1])[0]
                 result_list = result_map[idx_1][idx_2]
-                # print("Size", raw_model.clusters[idx_1].pattern_graph.values)
-                # print(result_list)
-                # print(raw_model.clusters[idx_1].values)
-                # print(true_count, false_count)
-                # print(result_list, min(cost_map[idx_1].items(), key=lambda x: x[1]))
 
                 transformed_cluster = transformed_model.clusters[idx_2]
 
                 for idx, values in result_list.items():
                     value_str = "".join(values)
 
-                    is_validated = transformed_cluster.pattern_graph.match_and_join(value_str)
+                    is_validated = transformed_cluster.pattern_graph.join_from_text(value_str)
 
-                    # print("Length", len(raw_model.clusters[idx_1].pattern_graph.values), len(result_list))
-                    # print(raw_model.clusters[idx_1].pattern_graph.values)
                     raw_str = raw_model.clusters[idx_1].pattern_graph.values[idx]
 
                     raw_indices = [i for i, val in enumerate(raw_input_list) if val == raw_str[1:-1]]
@@ -132,7 +129,9 @@ class TransformationEvaluation:
                                 false_count += 1
                                 if not is_validated:
                                     validation_count += 1
-                                print("False", value_str, groundtruth)
+                            print("'%s'" % value_str)
+                            print("'%s'" % groundtruth)
+                            print("False", value_str, groundtruth)
                         except Exception as e:
                             print(e)
                             if not is_validated:
@@ -140,19 +139,21 @@ class TransformationEvaluation:
                             false_count += 1
 
             running_time = time.time() - start
+            if true_count + false_count == 0:
+                continue
             accuracy = true_count * 1.0 / (false_count + true_count)
             validate_accuracy = validation_count * 1.0 / (false_count + true_count)
 
             accuracy_dict[file_name] = accuracy
             time_dict[file_name] = running_time
-            validation_dict[file_name] = validation_count
-            print(accuracy)
-            print(accuracy_dict)
-            print(time_dict)
-            print(validation_dict)
-            print(np.mean(list(accuracy_dict.values())))
-            print(np.mean(list(time_dict.values())))
-            print(np.mean(list(validation_dict.values())))
+            validation_dict[file_name] = validate_accuracy
+            # print(accuracy)
+            # print(accuracy_dict)
+            # print(time_dict)
+            # print(validation_dict)
+            print("Mean accuracy", np.mean(list(accuracy_dict.values())))
+            print("Mean time", np.mean(list(time_dict.values())))
+            print("Mean validation", np.mean(list(validation_dict.values())))
 
             with open(output_file_path, "w") as writer:
                 for i in range(len(raw_input_list)):

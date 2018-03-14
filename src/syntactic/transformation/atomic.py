@@ -99,7 +99,7 @@ class Lower(Operation):
 class SubStr(Operation):
     def __init__(self, raw_ev, transformed_ev):
         super(SubStr, self).__init__(raw_ev, transformed_ev)
-        self.score = 0
+        self.score = -1
         self.start_index = -1
         self.end_index = -1
         self.min_length = raw_ev.min_length
@@ -111,18 +111,22 @@ class SubStr(Operation):
 
         score_dict = defaultdict(lambda: 0)
 
+        # print("Lenght", self.min_length, length)
+
         for i in range(self.min_length - length + 1):
+            print("i", i)
             value_list = []
             for value in self.raw_ev.values:
                 value_list.append(value[i: i + length])
+            # print("Index list", i, value_list)
             score_dict[i] = self.score_range(value_list, model)
 
             value_list = []
             for value in self.raw_ev.values:
-                value_list.append(value[i: i + length])
+                value_list.append(value[-i - length: -i])
             score_dict[-i] = self.score_range(value_list, model)
 
-        # print(score_dict, min_length, length)
+        print("Score dict", score_dict)
         if score_dict:
             self.score = max(score_dict.values())
         else:
@@ -136,12 +140,12 @@ class SubStr(Operation):
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
-        if transformed_ev.min_length != transformed_ev.max_length:
+        # print(raw_ev.min_length, raw_ev.max_length, transformed_ev.min_length, transformed_ev.max_length)
+        if transformed_ev.min_length != transformed_ev.max_length - 1:
             return False
         if raw_ev.atomic in [START_TOKEN, END_TOKEN] or transformed_ev.atomic in [START_TOKEN, END_TOKEN]:
             return False
-        if raw_ev.atomic != transformed_ev.atomic or transformed_ev.max_length > raw_ev.max_length \
-                or transformed_ev.min_length > raw_ev.min_length:
+        if raw_ev.atomic != transformed_ev.atomic:
             return False
         if raw_ev.min_length >= transformed_ev.max_length:
             return True
@@ -162,7 +166,7 @@ class SubStr(Operation):
 class InvSubStr(Operation):
     def __init__(self, raw_ev, transformed_ev):
         super(InvSubStr, self).__init__(raw_ev, transformed_ev)
-        self.score = 0
+        self.score = -1
         self.start_index = -1
         self.end_index = -1
         self.min_length = transformed_ev.min_length
@@ -199,7 +203,7 @@ class InvSubStr(Operation):
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
-        if raw_ev.min_length != raw_ev.max_length:
+        if raw_ev.min_length != raw_ev.max_length - 1:
             return False
         if transformed_ev.atomic in [START_TOKEN, END_TOKEN] or raw_ev.atomic in [START_TOKEN, END_TOKEN]:
             return False

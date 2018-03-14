@@ -10,13 +10,13 @@ from syntactic.mapping.feature import *
 class MappingModel:
 
     def __init__(self):
-        self.model = RandomForestClassifier()
+        self.model = LogisticRegression()
         self.feature_functions = [w2v_cosine, ks, tfidf_cosine]
 
     def train(self, train_data, train_labels):
         self.model.fit(train_data, train_labels)
         print("result", self.model.score(train_data, train_labels))
-        # print("Coef", self.model.coef_)
+        print("Coef", self.model.coef_)
 
     def train_from_graph(self, input_graphs):
         train_data = []
@@ -48,6 +48,8 @@ class MappingModel:
                 edge = graph.edge_map[start_node][end_node]
 
                 edge_data_dict[(start_node, end_node)].extend(edge.values[0].values)
+
+        edge_data_dict["Blank Column"] = ['' for x in range(1000)]
 
         for name_1 in edge_data_dict:
             for name_2 in edge_data_dict:
