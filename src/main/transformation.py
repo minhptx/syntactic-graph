@@ -29,8 +29,8 @@ class TransformationEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
         output_data_path = os.path.join("data/result")
 
-        for file_name in sorted(os.listdir(raw_data_path))[:150]:
-        # for file_name in ["bd2.csv"]:
+        for file_name in sorted(os.listdir(raw_data_path))[100:]:
+            # for file_name in ["bd2.csv"]:
             # for file_name in ["1.csv"]:            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
             start = time.time()
@@ -58,7 +58,6 @@ class TransformationEvaluation:
                     groundtruth_list = groundtruth_list
 
             # try:
-
 
             raw_input_list = raw_input_list[:1000]
             transformed_list = transformed_list[:1000]
@@ -129,9 +128,9 @@ class TransformationEvaluation:
                                 false_count += 1
                                 if not is_validated:
                                     validation_count += 1
-                            print("'%s'" % value_str)
-                            print("'%s'" % groundtruth)
-                            print("False", value_str, groundtruth)
+                                print("'%s'" % value_str)
+                                print("'%s'" % groundtruth)
+                                print("False", value_str, groundtruth)
                         except Exception as e:
                             print(e)
                             if not is_validated:

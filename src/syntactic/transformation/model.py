@@ -23,7 +23,7 @@ class TransformationModel:
         candidate_map = self.generate(self.raw_graph, self.transformed_graph)
 
         for start_node, end_node in candidate_map:
-            print(candidate_map[(start_node, end_node)])
+            # print(candidate_map[(start_node, end_node)])
             best_operation = max(candidate_map[(start_node, end_node)], key=lambda x: x[0])
             best_operations[start_node][end_node] = best_operation[1]
             sim_map[start_node][end_node] = best_operation[0]
@@ -39,11 +39,11 @@ class TransformationModel:
             operation_path.append(best_operations[path[i - 1]][path[i]])
 
         transformed_column_list = []
-        print("best transformation")
+        # print("best transformation")
         for operation in operation_path:
-            print(operation.raw_ev.values[:3], operation.transformed_ev.values[:3], operation,
-                  operation.score_function(self.model),
-                  operation.transform()[:3], len(operation.raw_ev.values))
+            # print(operation.raw_ev.values[:3], operation.transformed_ev.values[:3], operation,
+            #       operation.score_function(self.model),
+            #       operation.transform()[:3], len(operation.raw_ev.values))
             transformed_column_list.append(operation.transform())
 
         transformed_value_list = defaultdict(lambda: [])
@@ -93,7 +93,7 @@ class TransformationModel:
                     distance_map[next_node] = distance_map[current_node] + sim_matrix[current_node][next_node]
                     previous_map[next_node] = current_node
 
-            print("Topo", current_node)
+            # print("Topo", current_node)
 
             # print("End")
         current_node = end_node
@@ -130,7 +130,7 @@ class TransformationModel:
 
                                 for candidate in candidates:
                                     score = candidate.score_function(self.model)
-                                    print(ev_1.values[:3], ev_2.values[:3], candidate, ev_1.atomic, ev_2.atomic, score)
+                                    # print(ev_1.values[:3], ev_2.values[:3], candidate, ev_1.atomic, ev_2.atomic, score)
                                     candidate_map[(start_node_2, end_node_2)].append((score, candidate))
 
         return candidate_map

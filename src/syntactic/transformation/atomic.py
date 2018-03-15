@@ -71,7 +71,7 @@ class Upper(Operation):
         if transformed_ev.atomic in [UPPER_CASE, UPPER_CASE_WS] and raw_ev.atomic in [LOWER_CASE, ALPHABET, PROPER_CASE,
                                                                                       LOWER_CASE_WS, ALPHABET_WS,
                                                                                       PROPER_CASE_WS]:
-            if transformed_ev.length == raw_ev.length:
+            if transformed_ev.is_length_fit(raw_ev):
                 return True
         return False
 
