@@ -9,6 +9,7 @@ import pandas as pd
 
 from syntactic.generation.model import HierarchicalModel
 from syntactic.transformation.model import TransformationModel
+from syntactic.validation.model import ValidationModel
 
 
 class TransformationEvaluation:
@@ -16,7 +17,7 @@ class TransformationEvaluation:
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
         self.transformed_data_dict = defaultdict(lambda: [])
-        self.folder_path = "data/transformation"
+        self.folder_path = "data/noisy"
         self.name_list = []
 
     def read_data(self):
@@ -29,8 +30,12 @@ class TransformationEvaluation:
         groundtruth_data_path = os.path.join(self.folder_path, "groundtruth")
         output_data_path = os.path.join("data/result")
 
-        for file_name in sorted(os.listdir(raw_data_path))[100:]:
-            # for file_name in ["bd2.csv"]:
+        validation_model = ValidationModel()
+
+        validation_count = 0
+
+        for file_name in sorted(os.listdir(raw_data_path))[:100]:
+        # for file_name in ["bd1.csv"]:
             # for file_name in ["1.csv"]:            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
             start = time.time()
@@ -66,8 +71,6 @@ class TransformationEvaluation:
             raw_model = HierarchicalModel(raw_input_list)
             raw_model.build_hierarchy()
 
-            print("Transformation")
-
             transformed_model = HierarchicalModel(transformed_list)
             transformed_model.build_hierarchy()
             # except:
@@ -78,7 +81,6 @@ class TransformationEvaluation:
 
             true_count = 0
             false_count = 0
-            validation_count = 0
 
             for idx_1, raw_cluster in enumerate(raw_model.clusters):
                 for idx_2, transformed_cluster in enumerate(transformed_model.clusters):
@@ -95,25 +97,25 @@ class TransformationEvaluation:
 
             value_list = defaultdict(lambda: None)
 
+            validated = True
+
             for idx_1 in result_map:
                 idx_2 = min(cost_map[idx_1].items(), key=lambda x: x[1])[0]
                 result_list = result_map[idx_1][idx_2]
 
-                transformed_cluster = transformed_model.clusters[idx_2]
-
+                existed_list = []
                 for idx, values in result_list.items():
                     value_str = "".join(values)
 
-                    is_validated = transformed_cluster.pattern_graph.join_from_text(value_str)
+                    if value_str in existed_list:
+                        continue
+
+                    existed_list.append(value_str)
 
                     raw_str = raw_model.clusters[idx_1].pattern_graph.values[idx]
 
-                    raw_indices = [i for i, val in enumerate(raw_input_list) if val == raw_str[1:-1]]
-                    # print(value_str)
-                    # print(raw_str)
-                    # print(groundtruth_list[raw_idx].strip())
-                    # print(len(groundtruth_list), len(raw_input_list))
 
+                    raw_indices = [i for i, val in enumerate(raw_input_list) if val == raw_str[1:-1]]
                     for raw_idx in raw_indices:
 
                         value_list[raw_idx] = value_str
@@ -121,38 +123,44 @@ class TransformationEvaluation:
                         try:
                             groundtruth = groundtruth_list[raw_idx]
                             if value_str.strip() == groundtruth.strip():
-                                if is_validated:
-                                    validation_count += 1
                                 true_count += 1
                             else:
                                 false_count += 1
-                                if not is_validated:
-                                    validation_count += 1
-                                print("'%s'" % value_str)
-                                print("'%s'" % groundtruth)
                                 print("False", value_str, groundtruth)
                         except Exception as e:
                             print(e)
-                            if not is_validated:
-                                validation_count += 1
                             false_count += 1
 
+                transformed_cluster = transformed_model.clusters[idx_2]
+
+                result_model = HierarchicalModel(["".join(x) for x in result_list.values()])
+                result_model.build_hierarchy()
+
+                print(len(result_model.clusters))
+
+                if len(result_model.clusters) != 1:
+                    validated = False
+                    print("Not Validated: Too much clusters")
+                elif not validation_model.validate(result_model.clusters[0], transformed_cluster):
+                    validated = False
+
             running_time = time.time() - start
-            if true_count + false_count == 0:
-                continue
-            accuracy = true_count * 1.0 / (false_count + true_count)
-            validate_accuracy = validation_count * 1.0 / (false_count + true_count)
+            accuracy = true_count * 1.0 / len(groundtruth_list)
+
+            if validated and accuracy == 1:
+                validation_count += 1
+            elif not validated and accuracy != 1:
+                validation_count += 1
 
             accuracy_dict[file_name] = accuracy
             time_dict[file_name] = running_time
-            validation_dict[file_name] = validate_accuracy
-            # print(accuracy)
+            print("Accuracy", accuracy)
             # print(accuracy_dict)
             # print(time_dict)
             # print(validation_dict)
             print("Mean accuracy", np.mean(list(accuracy_dict.values())))
             print("Mean time", np.mean(list(time_dict.values())))
-            print("Mean validation", np.mean(list(validation_dict.values())))
+            print("Mean validation", validation_count * 1.0 / len(accuracy_dict))
 
             with open(output_file_path, "w") as writer:
                 for i in range(len(raw_input_list)):
@@ -166,9 +174,6 @@ class TransformationEvaluation:
 
             for name, acc in accuracy_dict.items():
                 writer.writerow([name, acc, time_dict[name]])
-
-        print(np.mean(list(accuracy_dict.values())))
-
 
 if __name__ == "__main__":
     evaluation = TransformationEvaluation()

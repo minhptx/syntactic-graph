@@ -114,7 +114,6 @@ class SubStr(Operation):
         # print("Lenght", self.min_length, length)
 
         for i in range(self.min_length - length + 1):
-            print("i", i)
             value_list = []
             for value in self.raw_ev.values:
                 value_list.append(value[i: i + length])
@@ -126,7 +125,7 @@ class SubStr(Operation):
                 value_list.append(value[-i - length: -i])
             score_dict[-i] = self.score_range(value_list, model)
 
-        print("Score dict", score_dict)
+        # print("Score dict", score_dict)
         if score_dict:
             self.score = max(score_dict.values())
         else:

@@ -39,11 +39,11 @@ class TransformationModel:
             operation_path.append(best_operations[path[i - 1]][path[i]])
 
         transformed_column_list = []
-        # print("best transformation")
+        print("best transformation")
         for operation in operation_path:
-            # print(operation.raw_ev.values[:3], operation.transformed_ev.values[:3], operation,
-            #       operation.score_function(self.model),
-            #       operation.transform()[:3], len(operation.raw_ev.values))
+            print(operation.raw_ev.values[:3], operation.transformed_ev.values[:3], operation,
+                  operation.score_function(self.model),
+                  operation.transform()[:3], len(operation.raw_ev.values))
             transformed_column_list.append(operation.transform())
 
         transformed_value_list = defaultdict(lambda: [])
@@ -130,7 +130,7 @@ class TransformationModel:
 
                                 for candidate in candidates:
                                     score = candidate.score_function(self.model)
-                                    # print(ev_1.values[:3], ev_2.values[:3], candidate, ev_1.atomic, ev_2.atomic, score)
+                                    print(ev_1.values[:3], ev_2.values[:3], candidate, ev_1.atomic, ev_2.atomic, score)
                                     candidate_map[(start_node_2, end_node_2)].append((score, candidate))
 
         return candidate_map

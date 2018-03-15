@@ -18,9 +18,9 @@ class Cluster:
 
     @staticmethod
     def generate(seed, cluster_value_list, sim_map):
-        print("Generate ...", len(cluster_value_list), cluster_value_list)
+        # print("Generate ...", len(cluster_value_list), cluster_value_list)
         seed_graph = Graph.generate(seed)
-        print(seed, cluster_value_list)
+        # print(seed, cluster_value_list)
         cluster_value_list.remove(seed)
         if cluster_value_list:
             min_sim_sample = min(cluster_value_list, key=lambda x: sim_map[seed][x])
@@ -80,7 +80,7 @@ class HierarchicalModel:
 
         while uncovered_list:
 
-            print("Len uncovered", len(uncovered_list))
+            # print("Len uncovered", len(uncovered_list))
 
             pre_cluster_map = defaultdict(lambda: [])
 
@@ -91,7 +91,7 @@ class HierarchicalModel:
 
             seed_set = self.seed_cluster(text_list)
 
-            print("Text", text_list, seed_set)
+            # print("Text", text_list, seed_set)
 
             for text in text_list:
                 if text in seed_set:
@@ -111,7 +111,7 @@ class HierarchicalModel:
 
             remove_list = []
 
-            print("uncover", len(uncovered_list))
+            # print("uncover", len(uncovered_list))
 
             for text in uncovered_list:
                 for cluster in self.clusters:
@@ -121,8 +121,8 @@ class HierarchicalModel:
                         cluster.add_value(text)
                         remove_list.append(text)
                         break
-                else:
-                    print(text)
+                # else:
+                    # print(text)
                 # print(len(remove_list), len(cluster.pattern_graph.values))
 
             uncovered_list = [x for x in uncovered_list if x not in set(remove_list)]
@@ -143,7 +143,7 @@ class HierarchicalModel:
             new_seed, min_sim = self.min_sim_sample(sample_list, seed_set)
             min_sim_list.append(min_sim)
 
-            print(min_sim_list, new_seed, seed_set)
+            # print(min_sim_list, new_seed, seed_set)
             if not new_seed:
                 return seed_set
             seed_set.append(new_seed)

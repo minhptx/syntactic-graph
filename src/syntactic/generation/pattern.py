@@ -23,16 +23,16 @@ class PatternToken:
                and self.max_length == ev.max_length and self.neighbor == ev.neighbor
 
     def is_position_fit(self, ev):
-        nth = set(self.nth).intersection(ev.nth)
+        nth = list(set(self.nth).intersection(ev.nth))
         if nth:
             return self.atomic == ev.atomic and self.neighbor == ev.neighbor
         return False
 
     def is_length_fit(self, ev):
-        range_length = sorted(
-            set(range(self.min_length, self.max_length + 1)).union(set(range(ev.min_length, ev.max_length + 1))))
+        range_length = list(sorted(
+            set(range(self.min_length, self.max_length + 1)).union(set(range(ev.min_length, ev.max_length + 1)))))
         if range_length:
-            return True
+            return self.atomic == ev.atomic and self.nth == ev.nth
         return False
 
     def is_subset(self, ev):
@@ -44,9 +44,9 @@ class PatternToken:
 
     def join(self, ev):
         if self.is_position_fit(ev):
-            nth = set(self.nth).intersection(ev.nth)
-            range_length = sorted(
-                set(range(self.min_length, self.max_length)).union(set(range(ev.min_length, ev.max_length))))
+            nth = list(set(self.nth).intersection(ev.nth))
+            range_length = list(sorted(
+                set(range(self.min_length, self.max_length)).union(set(range(ev.min_length, ev.max_length)))))
             # print("Range", self.min_length, self.max_length, ev.min_length, ev.max_length, range_length)
             min_length = range_length[0]
             max_length = range_length[-1]
@@ -60,6 +60,18 @@ class Edge:
             self.values = edge_value_list
         else:
             self.values = []
+
+    def __eq__(self, other):
+        if len(self.values) != len(other.values):
+            return False
+
+        for ev_1 in self.values:
+            for ev_2 in other.values:
+                if ev_1.atomic == ev_2.atomic and ev_1.nth == ev_2.nth:
+                    break
+            else:
+                return False
+        return True
 
     def add_edge_value(self, ev):
         self.values.append(ev)
@@ -83,6 +95,41 @@ class Graph:
         self.values = text_list
         self.start_node = None
         self.end_node = None
+
+    def similar(self, other):
+        layer = [self.start_node]
+        other_layer = [other.start_node]
+
+        visited = []
+        other_visited = []
+
+        while layer:
+            next_layer = []
+            other_next_layer = []
+
+            edge_list = []
+            other_edge_list = []
+
+            for node in layer:
+                for next_node in self.edge_map[node]:
+                    if next_node not in visited:
+                        next_layer.append(next_node)
+                        edge_list.append(self.edge_map[node][next_node])
+
+            for node in other_layer:
+                for next_node in other.edge_map[node]:
+                    if next_node not in other_visited:
+                        other_next_layer.append(next_node)
+                        other_edge_list.append(other.edge_map[node][next_node])
+
+            if edge_list != other_edge_list:
+                print(edge_list, other_edge_list)
+                return False
+
+            layer = next_layer
+            other_layer = other_next_layer
+
+        return True
 
     def num_edge(self):
         count = 0
@@ -140,7 +187,6 @@ class Graph:
             if not graph.is_reachable_from_dest(start_node, graph.end_node):
                 remove_list.append(start_node)
 
-
         for node in remove_list:
             del graph.edge_map[node]
 
@@ -150,53 +196,6 @@ class Graph:
         graph = Graph.generate(text)
 
         return self.join(graph)
-
-    # def match_and_join(self, input_str):
-    #
-    #     stack = [(self.start_node, input_str)]
-    #     visited = []
-    #     add_list = defaultdict(lambda: defaultdict(lambda: None))
-    #
-    #     is_passable = False
-    #     while stack:
-    #         current_node, current_str = stack.pop(0)
-    #
-    #         if current_node in visited:
-    #             continue
-    #
-    #         visited.append(current_node)
-    #
-    #         for end_node in self.edge_map[current_node]:
-    #             edge = self.edge_map[current_node][end_node]
-    #
-    #             for idx, edge_value in enumerate(edge.values):
-    #                 if edge_value.atomic == END_TOKEN:
-    #                     is_passable = True
-    #
-    #                 match = re.match(edge_value.atomic.regex, current_str)
-    #                 if match and match.start() == 0:
-    #                     if (end_node, current_str[len(match.group()):]) not in stack:
-    #                         stack.append((end_node, current_str[len(match.group()):]))
-    #
-    #                     add_list[(current_node, end_node)][idx] = match.group()
-    #
-    #     if is_passable:
-    #         for start_node, end_node in add_list:
-    #             remove_list = []
-    #             for idx_1, ev in enumerate(self.edge_map[start_node][end_node].values):
-    #                 if idx_1 in add_list[(start_node, end_node)]:
-    #                     ev.values.append(add_list[(start_node, end_node)][idx_1])
-    #                 else:
-    #                     remove_list.append(idx_1)
-    #
-    #             if len(remove_list) == len(self.edge_map[start_node][end_node].values):
-    #                 del self.edge_map[start_node][end_node]
-    #             else:
-    #                 for idx in sorted(remove_list, reverse=True):
-    #                     del self.edge_map[start_node][end_node].values[idx]
-    #
-    #         return True
-    #     return False
 
     @staticmethod
     def atomic_profile(input_str):
@@ -239,9 +238,6 @@ class Graph:
                     continue
                 left_index = atomic_pos_dict[atomic.name].index((i, j))
                 right_index = len(atomic_pos_dict[atomic.name]) - left_index
-                graph.edge_map[(i,)][(j,)].add_edge_value(
-                    PatternToken(atomic, [left_index + 1, -right_index], j - i, j - i,
-                                 values=[sub_str]))  # variable-length
                 graph.edge_map[(i,)][(j,)].add_edge_value(
                     PatternToken(atomic, [left_index + 1, -right_index], j - i, j - i,
                                  values=[sub_str]))  # fixed-length

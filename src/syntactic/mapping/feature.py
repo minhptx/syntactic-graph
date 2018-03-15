@@ -10,9 +10,12 @@ from utils import nlp
 
 
 def jaccard(x, y):
-    intersection_cardinality = len(set.intersection(*[set(x), set(y)]))
-    union_cardinality = len(set.union(*[set(x), set(y)]))
-    return intersection_cardinality / float(union_cardinality)
+    try:
+        intersection_cardinality = len(set.intersection(*[set(x), set(y)]))
+        union_cardinality = len(set.union(*[set(x), set(y)]))
+        return intersection_cardinality / float(union_cardinality)
+    except:
+        return 0
 
 
 def tfidf_cosine(list_1, list_2):
