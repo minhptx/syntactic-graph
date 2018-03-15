@@ -15,7 +15,7 @@ class MappingModel:
 
     def train(self, train_data, train_labels):
         self.model.fit(train_data, train_labels)
-        print("result", self.model.score(train_data, train_labels))
+        # print("result", self.model.score(train_data, train_labels))
         print("Coef", self.model.coef_)
 
     def train_from_graph(self, input_graphs):

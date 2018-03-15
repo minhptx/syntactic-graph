@@ -32,7 +32,7 @@ class PatternToken:
         range_length = list(sorted(
             set(range(self.min_length, self.max_length + 1)).union(set(range(ev.min_length, ev.max_length + 1)))))
         if range_length:
-            return self.atomic == ev.atomic and self.nth == ev.nth
+            return True
         return False
 
     def is_subset(self, ev):
@@ -186,6 +186,9 @@ class Graph:
         for start_node in graph.edge_map.keys():
             if not graph.is_reachable_from_dest(start_node, graph.end_node):
                 remove_list.append(start_node)
+
+        if graph.start_node in remove_list:
+            return None
 
         for node in remove_list:
             del graph.edge_map[node]

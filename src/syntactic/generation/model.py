@@ -18,7 +18,7 @@ class Cluster:
 
     @staticmethod
     def generate(seed, cluster_value_list, sim_map):
-        # print("Generate ...", len(cluster_value_list), cluster_value_list)
+        print("Generate ...", len(cluster_value_list), seed, cluster_value_list)
         seed_graph = Graph.generate(seed)
         # print(seed, cluster_value_list)
         cluster_value_list.remove(seed)
@@ -80,7 +80,7 @@ class HierarchicalModel:
 
         while uncovered_list:
 
-            # print("Len uncovered", len(uncovered_list))
+            print("Len uncovered", len(uncovered_list))
 
             pre_cluster_map = defaultdict(lambda: [])
 
@@ -91,7 +91,7 @@ class HierarchicalModel:
 
             seed_set = self.seed_cluster(text_list)
 
-            # print("Text", text_list, seed_set)
+            print("Text", text_list, seed_set)
 
             for text in text_list:
                 if text in seed_set:

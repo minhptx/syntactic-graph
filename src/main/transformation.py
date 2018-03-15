@@ -17,7 +17,7 @@ class TransformationEvaluation:
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
         self.transformed_data_dict = defaultdict(lambda: [])
-        self.folder_path = "data/noisy"
+        self.folder_path = "data/transformation"
         self.name_list = []
 
     def read_data(self):
@@ -34,8 +34,8 @@ class TransformationEvaluation:
 
         validation_count = 0
 
-        for file_name in sorted(os.listdir(raw_data_path))[:100]:
-        # for file_name in ["bd1.csv"]:
+        for file_name in sorted(os.listdir(raw_data_path))[:50]:
+        # for file_name in ["107.csv"]:
             # for file_name in ["1.csv"]:            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
             start = time.time()

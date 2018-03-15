@@ -26,7 +26,7 @@ class TransformationModel:
             # print(candidate_map[(start_node, end_node)])
             best_operation = max(candidate_map[(start_node, end_node)], key=lambda x: x[0])
             best_operations[start_node][end_node] = best_operation[1]
-            sim_map[start_node][end_node] = best_operation[0]
+            sim_map[start_node][end_node] = 1 - best_operation[0]
 
         path, cost = TransformationModel.dijkstra(sim_map, self.transformed_graph.start_node,
                                                   self.transformed_graph.end_node)
@@ -110,7 +110,6 @@ class TransformationModel:
         print("End")
         return path, distance_map[end_node]
 
-
     def generate(self, raw_graph, transformed_graph):
 
         candidate_map = defaultdict(lambda: [])
@@ -124,9 +123,6 @@ class TransformationModel:
                         for ev_1 in edge_1.values:
                             for ev_2 in edge_2.values:
                                 candidates = TransformationModel.get_all_candidates(ev_1, ev_2)
-
-                                # print("pair", start_node_2, end_node_2, ev_1.atomic.regex, ev_2.atomic.regex,
-                                # candidates)
 
                                 for candidate in candidates:
                                     score = candidate.score_function(self.model)
