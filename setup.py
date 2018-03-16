@@ -7,5 +7,5 @@ setup(name='syntactic_structure',
       author_email='minhpham@usc.edu',
       license='MIT',
       packages=['syntactic'],
-      package_dir={'': 'src'},
+      package_dir={'syntactic': 'src/syntactic'},
       zip_safe=False)
