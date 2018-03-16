@@ -122,7 +122,7 @@ class HierarchicalModel:
                         remove_list.append(text)
                         break
                 # else:
-                    # print(text)
+                # print(text)
                 # print(len(remove_list), len(cluster.pattern_graph.values))
 
             uncovered_list = [x for x in uncovered_list if x not in set(remove_list)]
@@ -148,6 +148,9 @@ class HierarchicalModel:
                 return seed_set
             seed_set.append(new_seed)
             sample_list.remove(new_seed)
+
+            if seed_set > 10:
+                return seed_set
 
         return seed_set[:-2]
 
