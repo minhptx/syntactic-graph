@@ -2,8 +2,7 @@ from collections import defaultdict
 
 import regex as re
 
-from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString, TOKEN_TYPES, TEXT
-from utils.string import lcs
+from syntactic.generation.atomic import START_TOKEN, END_TOKEN, ATOMIC_LIST, ConstantString, TOKEN_TYPES
 
 
 class PatternToken:
@@ -36,10 +35,8 @@ class PatternToken:
         return False
 
     def is_subset(self, ev):
-        if self.atomic == ev.atomic:
-            if self.nth == ev.nth:
-                if ev.min_length == self.min_length and ev.max_length == self.max_length:
-                    return True
+        if self.atomic.is_subset(ev.atomic):
+            return True
         return False
 
     def join(self, ev):
@@ -153,7 +150,6 @@ class Graph:
                             minimal_list.remove(ev_2)
 
                 self.edge_map[start_node][end_node] = Edge(minimal_list)
-        return self
 
     def is_reachable_from_dest(self, node, dest_node):
         if node == dest_node:

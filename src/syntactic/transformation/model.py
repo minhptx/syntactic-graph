@@ -26,7 +26,7 @@ class TransformationModel:
             # print(candidate_map[(start_node, end_node)])
             best_operation = max(candidate_map[(start_node, end_node)], key=lambda x: x[0])
             best_operations[start_node][end_node] = best_operation[1]
-            sim_map[start_node][end_node] = 1 - best_operation[0]
+            sim_map[start_node][end_node] = best_operation[0]
 
         path, cost = TransformationModel.dijkstra(sim_map, self.transformed_graph.start_node,
                                                   self.transformed_graph.end_node)

@@ -26,12 +26,6 @@ class ProperCase(Atomic):
         else:
             return False
 
-    def is_transformable_from(self, atomic):
-        if atomic in [ALPHABET, ALPHANUM, ALPHABET_WS, PROPER_CASE_WS]:
-            return
-        else:
-            return False
-
 
 class UpperCase(Atomic):
     def __init__(self):
@@ -39,12 +33,6 @@ class UpperCase(Atomic):
 
     def is_subset(self, atomic):
         if atomic in [ALPHABET, ALPHANUM, ALPHABET_WS, UPPER_CASE_WS]:
-            return True
-        else:
-            return False
-
-    def is_transformable_from(self, atomic):
-        if atomic in [ALPHABET, ALPHANUM, ALPHABET_WS, PROPER_CASE_WS]:
             return True
         else:
             return False
@@ -163,17 +151,6 @@ class AlphabetPunctuation(Atomic):
             return False
 
 
-class Any(Atomic):
-    def __init__(self):
-        super(Any, self).__init__("AlphabetPunctuation", r"[\p{L}\p{P}\p{N}]+", "any")
-
-    def is_subset(self, atomic):
-        if atomic in [ANY]:
-            return True
-        else:
-            return False
-
-
 class AlphabetWhitespace(Atomic):
     def __init__(self):
         super(AlphabetWhitespace, self).__init__(
@@ -184,14 +161,6 @@ class AlphabetWhitespace(Atomic):
             return True
         else:
             return False
-
-
-class Text(Atomic):
-    def __init__(self):
-        super(Text, self).__init__("Text", r"([\p{L}\p{P}]+|\p{Z}+|[\p{N}\p{P}]+)+", "txt")
-
-    def is_subset(self, other_atomic):
-        return False
 
 
 class ConstantString(Atomic):
@@ -220,8 +189,8 @@ LOWER_CASE_WS = LowerCaseWhitespace()
 ALPHABET_WS = AlphabetWhitespace()
 PUNCTUATION = Punctuation()
 ALPHA_PUNC = AlphabetPunctuation()
-ANY = Any()
-TEXT = Text()
+# ANY = Any()
+# TEXT = Text()
 
 ATOMIC_LIST = [PROPER_CASE, UPPER_CASE, LOWER_CASE, DIGIT, ALPHABET, ALPHANUM, WHITESPACE, PROPER_CASE_WS,
                LOWER_CASE_WS, UPPER_CASE_WS, ALPHABET_WS, PUNCTUATION]

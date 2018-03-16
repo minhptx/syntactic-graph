@@ -34,7 +34,7 @@ class TransformationEvaluation:
 
         validation_count = 0
 
-        for file_name in sorted(os.listdir(raw_data_path))[:50]:
+        for file_name in sorted(os.listdir(raw_data_path))[]:
         # for file_name in ["107.csv"]:
             # for file_name in ["1.csv"]:            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
@@ -100,7 +100,7 @@ class TransformationEvaluation:
             validated = True
 
             for idx_1 in result_map:
-                idx_2 = min(cost_map[idx_1].items(), key=lambda x: x[1])[0]
+                idx_2 = max(cost_map[idx_1].items(), key=lambda x: x[1])[0]
                 result_list = result_map[idx_1][idx_2]
 
                 existed_list = []

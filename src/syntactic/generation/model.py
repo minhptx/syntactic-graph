@@ -128,7 +128,7 @@ class HierarchicalModel:
             uncovered_list = [x for x in uncovered_list if x not in set(remove_list)]
 
         for cluster in self.clusters:
-            cluster.pattern_graph = cluster.pattern_graph.simplify()
+            cluster.pattern_graph.simplify()
 
     def seed_cluster(self, text_list):
         min_sim_list = [-2, -1]
