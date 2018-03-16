@@ -6,6 +6,6 @@ setup(name='syntactic_structure',
       author='Minh Pham',
       author_email='minhpham@usc.edu',
       license='MIT',
-      packages=['api'],
+      packages=['syntactic'],
       package_dir={'': 'src'},
       zip_safe=False)
