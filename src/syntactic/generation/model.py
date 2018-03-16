@@ -149,7 +149,7 @@ class HierarchicalModel:
             seed_set.append(new_seed)
             sample_list.remove(new_seed)
 
-            if seed_set > 10:
+            if len(seed_set) > 10:
                 return seed_set
 
         return seed_set[:-2]

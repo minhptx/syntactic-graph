@@ -34,7 +34,7 @@ class TransformationEvaluation:
 
         validation_count = 0
 
-        for file_name in sorted(os.listdir(raw_data_path))[98:100]:
+        for file_name in sorted(os.listdir(raw_data_path))[150:]:
         # for file_name in ["107.csv"]:
             # for file_name in ["1.csv"]:            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
@@ -162,7 +162,7 @@ class TransformationEvaluation:
             print("Mean time", np.mean(list(time_dict.values())))
             print("Mean validation", validation_count * 1.0 / len(accuracy_dict))
 
-            with open(output_file_path, "w") as writer:
+            with codecs.open(output_file_path, "w", encoding="utf-8") as writer:
                 for i in range(len(raw_input_list)):
                     if i not in value_list:
                         writer.write("\n")
