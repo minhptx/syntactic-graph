@@ -99,7 +99,7 @@ class TransformationModel:
         current_node = end_node
 
         path = [end_node]
-        print(previous_map)
+        # print(previous_map)
 
         while current_node != start_node:
             path.insert(0, previous_map[current_node])

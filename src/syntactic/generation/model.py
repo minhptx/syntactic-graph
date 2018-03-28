@@ -127,8 +127,8 @@ class HierarchicalModel:
 
             uncovered_list = [x for x in uncovered_list if x not in set(remove_list)]
 
-        for cluster in self.clusters:
-            cluster.pattern_graph.simplify()
+        # for cluster in self.clusters:
+        #     cluster.pattern_graph.simplify()
 
     def seed_cluster(self, text_list):
         min_sim_list = [-2, -1]
@@ -138,12 +138,12 @@ class HierarchicalModel:
 
         seed_set = [sorted(text_list, key=lambda x: len(x))[0]]
 
-        while min_sim < 0.1 or abs(min_sim_list[-2] - min_sim_list[-1]) > 0.1:
+        while min_sim < 0.1 or abs(min_sim_list[-2] - min_sim_list[-1]) > 0.03:
             # print(text_list)
             new_seed, min_sim = self.min_sim_sample(sample_list, seed_set)
             min_sim_list.append(min_sim)
 
-            # print(min_sim_list, new_seed, seed_set)
+            print(min_sim_list, new_seed, seed_set)
             if not new_seed:
                 return seed_set
             seed_set.append(new_seed)
@@ -189,7 +189,10 @@ class HierarchicalModel:
         else:
             num_edge_2 = Graph.generate(text_2).num_edge()
 
-        return graph.num_edge() * 1.0 / min(num_edge_1, num_edge_2)
+        with open("sim.txt", "a") as writer:
+            writer.write("%s-%s-%f\n" % (text_1, text_2, graph.num_edge() * 1.0 / max(num_edge_1, num_edge_2)))
+
+        return graph.num_edge() * 1.0 / max(num_edge_1, num_edge_2)
 
     def min_sim_sample(self, text_list, anchor_set):
         # print("Sampling")

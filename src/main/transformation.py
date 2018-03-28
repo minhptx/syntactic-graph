@@ -1,6 +1,7 @@
 import codecs
 import csv
 import os
+import random
 import time
 from collections import defaultdict
 
@@ -34,7 +35,7 @@ class TransformationEvaluation:
 
         validation_count = 0
 
-        for file_name in sorted(os.listdir(raw_data_path))[150:]:
+        for file_name in sorted(os.listdir(raw_data_path))[0:1]:
         # for file_name in ["107.csv"]:
             # for file_name in ["1.csv"]:            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
@@ -140,7 +141,7 @@ class TransformationEvaluation:
 
                 if len(result_model.clusters) != 1:
                     validated = False
-                    print("Not Validated: Too much clusters")
+                    # print("Not Validated: Too much clusters")
                 elif not validation_model.validate(result_model.clusters[0], transformed_cluster):
                     validated = False
 
@@ -176,5 +177,6 @@ class TransformationEvaluation:
                 writer.writerow([name, acc, time_dict[name]])
 
 if __name__ == "__main__":
+    random.seed(1)
     evaluation = TransformationEvaluation()
     print(evaluation.read_data())

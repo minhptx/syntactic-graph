@@ -120,7 +120,7 @@ class Graph:
                         other_edge_list.append(other.edge_map[node][next_node])
 
             if edge_list != other_edge_list:
-                print(edge_list, other_edge_list)
+                # print(edge_list, other_edge_list)
                 return False
 
             layer = next_layer
@@ -158,9 +158,9 @@ class Graph:
             if node in self.edge_map:
                 for next_node in self.edge_map[node]:
                     if self.is_reachable_from_dest(next_node, dest_node):
-                        print(next_node, True)
+                        # print(next_node, True)
                         return True
-                    print(next_node, False)
+                    # print(next_node, False)
         return False
 
     def join(self, other_graph):
@@ -181,7 +181,7 @@ class Graph:
                             graph.edge_map[start_node_1 + start_node_2][end_node_1 + end_node_2] = edge
 
         remove_list = []
-        print(graph.edge_map, graph.start_node, graph.end_node)
+        # print(graph.edge_map, graph.start_node, graph.end_node)
         for start_node in graph.edge_map.keys():
             if not graph.is_reachable_from_dest(start_node, graph.end_node):
                 remove_list.append(start_node)
