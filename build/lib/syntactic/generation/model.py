@@ -177,6 +177,7 @@ class HierarchicalModel:
         # print("Text", text_1, text_2)
 
         if not graph:
+            # print("No graph")
             return 0
 
         if self.num_edge_map[text_1]:
@@ -189,6 +190,7 @@ class HierarchicalModel:
         else:
             num_edge_2 = Graph.generate(text_2).num_edge()
 
+        # print(graph.num_edge(), num_edge_1, num_edge_2)
         return graph.num_edge() * 1.0 / min(num_edge_1, num_edge_2)
 
     def min_sim_sample(self, text_list, anchor_set):

@@ -132,7 +132,7 @@ class Graph:
         count = 0
         for start_edge in self.edge_map:
             for end_edge in self.edge_map[start_edge]:
-                count += sum([x.max_length - x.min_length + 1 for x in self.edge_map[start_edge][end_edge].values])
+                count += len(self.edge_map[start_edge][end_edge].values)
         return count
 
     def simplify(self):
@@ -158,9 +158,7 @@ class Graph:
             if node in self.edge_map:
                 for next_node in self.edge_map[node]:
                     if self.is_reachable_from_dest(next_node, dest_node):
-                        print(next_node, True)
                         return True
-                    print(next_node, False)
         return False
 
     def join(self, other_graph):
@@ -181,7 +179,6 @@ class Graph:
                             graph.edge_map[start_node_1 + start_node_2][end_node_1 + end_node_2] = edge
 
         remove_list = []
-        print(graph.edge_map, graph.start_node, graph.end_node)
         for start_node in graph.edge_map.keys():
             if not graph.is_reachable_from_dest(start_node, graph.end_node):
                 remove_list.append(start_node)

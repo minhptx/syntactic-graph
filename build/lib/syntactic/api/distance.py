@@ -15,5 +15,3 @@ def syntactic_distance(list_1, list_2):
 
     return intersection.num_edge() * 1.0 / min(graph_1.num_edge(), graph_2.num_edge())
 
-if __name__ == "__main__":
-    print(syntactic_distance(['1', '0', '2'], ['10', '11', '12']))
