@@ -28,6 +28,8 @@ class Constant(Operation):
 
     @staticmethod
     def check_condition(raw_ev, transformed_ev):
+        if len(transformed_ev.values) == 1:
+            return False
         if isinstance(transformed_ev.atomic, ConstantString):
             return True
         elif transformed_ev.atomic in [START_TOKEN, END_TOKEN]:

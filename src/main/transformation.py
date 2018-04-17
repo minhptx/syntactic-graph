@@ -18,7 +18,7 @@ class TransformationEvaluation:
         self.data_set = defaultdict(lambda: [])
         self.raw_data_dict = defaultdict(lambda: [])
         self.transformed_data_dict = defaultdict(lambda: [])
-        self.folder_path = "data/transformation"
+        self.folder_path = "data/sygus"
         self.name_list = []
 
     def read_data(self):
@@ -35,7 +35,7 @@ class TransformationEvaluation:
 
         validation_count = 0
 
-        for file_name in sorted(os.listdir(raw_data_path))[0:1]:
+        for file_name in sorted(os.listdir(raw_data_path))[:1]:
         # for file_name in ["107.csv"]:
             # for file_name in ["1.csv"]:            # if file_name in ["116.csv", "120.csv", "161.csv", "170.csv"]:
             #     continue
@@ -77,7 +77,7 @@ class TransformationEvaluation:
             # except:
             #     continue
 
-            cost_map = defaultdict(lambda: defaultdict(lambda: float("inf")))
+            cost_map = defaultdict(lambda: defaultdict(lambda: float("-inf")))
             result_map = defaultdict(lambda: defaultdict(lambda: None))
 
             true_count = 0
@@ -92,8 +92,7 @@ class TransformationEvaluation:
                     result_list, cost = transformation_model.generate_program()
 
                     cost_map[idx_1][
-                        idx_2] = cost - transformed_cluster.pattern_graph.num_edge() / \
-                                 raw_cluster.pattern_graph.num_edge()
+                        idx_2] = cost
                     result_map[idx_1][idx_2] = result_list
 
             value_list = defaultdict(lambda: None)

@@ -94,6 +94,7 @@ class HierarchicalModel:
             print("Text", text_list, seed_set)
 
             for text in text_list:
+
                 if text in seed_set:
                     pre_cluster_map[text].append(text)
                     uncovered_list.remove(text)
@@ -152,6 +153,7 @@ class HierarchicalModel:
             if len(seed_set) > 10:
                 return seed_set
 
+        print(self.sim_map)
         return seed_set[:-2]
 
     def similarity(self, text_1, text_2, is_cached=True):
@@ -234,8 +236,8 @@ if __name__ == "__main__":
     # print(time.time() - start)
 
     model = HierarchicalModel("")
-    graph_1 = Graph.generate(u'Male')
-    graph_2 = Graph.generate(u'Undetermined')
+    graph_1 = Graph.generate(u'Honda')
+    graph_2 = Graph.generate(u'Honda550')
     graph_3 = Graph.generate(u"Male")
 
     graph = graph_1.join(graph_2)
