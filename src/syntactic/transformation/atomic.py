@@ -32,10 +32,9 @@ class Constant(Operation):
             return False
         if isinstance(transformed_ev.atomic, ConstantString):
             return True
-        elif transformed_ev.atomic in [START_TOKEN, END_TOKEN]:
+        if transformed_ev.atomic in [START_TOKEN, END_TOKEN]:
             return True
-        else:
-            return False
+        return False
 
     def score_function(self, model):
         return 1
@@ -74,6 +73,7 @@ class Upper(Operation):
                                                                                       LOWER_CASE_WS, ALPHABET_WS,
                                                                                       PROPER_CASE_WS]:
             if transformed_ev.is_length_fit(raw_ev):
+                # print(self, transformed_ev.is_length_fit(raw_ev))
                 return True
         return False
 

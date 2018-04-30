@@ -169,7 +169,7 @@ class TransformationEvaluation:
                     else:
                         writer.write(value_list[i] + "\n")
 
-        with open("result.csv", "w") as f:
+        with open("last_15.csv", "w") as f:
             writer = csv.writer(f)
 
             for name, acc in accuracy_dict.items():

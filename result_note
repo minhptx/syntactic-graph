@@ -1,0 +1,14 @@
+0-50:
+Mean accuracy 0.8491656832803659
+Mean time 31.809715619087218
+Mean validation 0.96
+
+50-100:
+Mean accuracy 0.9145657833920876
+Mean time 32.26096529006958
+Mean validation 0.9
+
+100 - 176
+Mean accuracy 0.842605310923394
+Mean time 95.4862720746743
+Mean validation 0.881578947368421

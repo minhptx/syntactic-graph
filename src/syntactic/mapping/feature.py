@@ -18,9 +18,30 @@ def jaccard(x, y):
         return 0
 
 
-def tfidf_cosine(list_1, list_2):
+def tf_idf_char(list_1, list_2):
+    char_list_1 = []
+    for str_1 in list_1:
+        char_list_1.extend(list(str_1))
+
+    char_list_2 = []
+    for str_1 in list_2:
+        char_list_2.extend(list(str_1))
     try:
-        tfidf_vectorizer = TfidfVectorizer()
+        tfidf_vectorizer = TfidfVectorizer(min_df=1, analyzer='char')
+        tfidf_vectorizer.fit([" ".join(char_list_1), " ".join(char_list_2)])
+        tfidf_list_1 = tfidf_vectorizer.transform(char_list_1)
+        tfidf_list_2 = tfidf_vectorizer.transform(char_list_2)
+        # print(char_list_1[:5], char_list_2[:5])
+        return cosine_similarity(tfidf_list_1, tfidf_list_2)[0][0]
+    except Exception as e:
+        # print(e)
+        return 0
+
+
+def tfidf_cosine(list_1, list_2):
+    char_list_1 = []
+    try:
+        tfidf_vectorizer = TfidfVectorizer(min_df=1)
         tfidf_vectorizer.fit([" ".join(list_1), " ".join(list_2)])
         tfidf_list_1 = tfidf_vectorizer.transform(list_1)
         tfidf_list_2 = tfidf_vectorizer.transform(list_2)

@@ -18,7 +18,7 @@ class Cluster:
 
     @staticmethod
     def generate(seed, cluster_value_list, sim_map):
-        print("Generate ...", len(cluster_value_list), seed, cluster_value_list)
+        # print("Generate ...", len(cluster_value_list), seed, cluster_value_list)
         seed_graph = Graph.generate(seed)
         # print(seed, cluster_value_list)
         cluster_value_list.remove(seed)
@@ -80,7 +80,7 @@ class HierarchicalModel:
 
         while uncovered_list:
 
-            print("Len uncovered", len(uncovered_list))
+            # print("Len uncovered", len(uncovered_list))
 
             pre_cluster_map = defaultdict(lambda: [])
 
@@ -91,7 +91,7 @@ class HierarchicalModel:
 
             seed_set = self.seed_cluster(text_list)
 
-            print("Text", text_list, seed_set)
+            # print("Text", text_list, seed_set)
 
             for text in text_list:
 
@@ -144,7 +144,7 @@ class HierarchicalModel:
             new_seed, min_sim = self.min_sim_sample(sample_list, seed_set)
             min_sim_list.append(min_sim)
 
-            print(min_sim_list, new_seed, seed_set)
+            # print(min_sim_list, new_seed, seed_set)
             if not new_seed:
                 return seed_set
             seed_set.append(new_seed)
@@ -153,7 +153,7 @@ class HierarchicalModel:
             if len(seed_set) > 10:
                 return seed_set
 
-        print(self.sim_map)
+        # print(self.sim_map)
         return seed_set[:-2]
 
     def similarity(self, text_1, text_2, is_cached=True):

@@ -11,7 +11,7 @@ class MappingModel:
 
     def __init__(self):
         self.model = LogisticRegression()
-        self.feature_functions = [w2v_cosine, ks, tfidf_cosine, jaccard]
+        self.feature_functions = [w2v_cosine, tf_idf_char, tfidf_cosine]
 
     def train(self, train_data, train_labels):
         self.model.fit(train_data, train_labels)

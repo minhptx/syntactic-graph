@@ -29,7 +29,7 @@ class PatternToken:
 
     def is_length_fit(self, ev):
         range_length = list(sorted(
-            set(range(self.min_length, self.max_length + 1)).union(set(range(ev.min_length, ev.max_length + 1)))))
+            set(range(self.min_length, self.max_length)).intersection(set(range(ev.min_length, ev.max_length)))))
         if range_length:
             return True
         return False
@@ -93,6 +93,28 @@ class Graph:
         self.start_node = None
         self.end_node = None
 
+    def to_paths(self):
+        paths = []
+
+        visited = []
+
+        self.traverse(self.start_node, [], paths, visited)
+
+        return paths
+
+    def traverse(self, current_node, path, paths, visited):
+        path.append(current_node)
+        visited.append(current_node)
+
+        for end_node in self.edge_map[current_node]:
+            if end_node == self.end_node:
+                paths.append(path + [end_node])
+            else:
+                self.traverse(end_node, path, paths, visited)
+
+        visited.remove(current_node)
+        path.remove(current_node)
+
     def similar(self, other):
         layer = [self.start_node]
         other_layer = [other.start_node]
@@ -132,7 +154,10 @@ class Graph:
         count = 0
         for start_edge in self.edge_map:
             for end_edge in self.edge_map[start_edge]:
-                count += sum([x.max_length - x.min_length + 1 for x in self.edge_map[start_edge][end_edge].values])
+                # for ev in self.edge_map[start_edge][end_edge].values:
+                #     print(ev.atomic, isinstance(ev.atomic, ConstantString))
+                count += sum([x.max_length - x.min_length + 1 for x in self.edge_map[start_edge][end_edge].values if
+                              not isinstance(x.atomic, ConstantString)])
         return count
 
     def simplify(self):
